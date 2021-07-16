@@ -27,6 +27,9 @@ Network compatibility
 No human player (single player)
 
 
+
+
+
 Architecture Overview
 This program will be written in C. 
 Gameplay and interaction with the game will be through the terminal.
@@ -36,18 +39,8 @@ Indexes will be as follows: Array[Row][Column]
 Each element of the array will represent a slot on the board.
 yellow, red, and empty will be represented by enum.
 
-
 Arrow keys will move the cursor over the 7 columns represented by the token to drop (a properly colored “O”). If the arrow key is pressed in the direction of an edge then the key will wrap to the other side.
 
-Move right			Move left		Move left, Wrap
-O		        	->    O		      	<-	O	           	<-	          O
-_ _ _ _ _ _ _		 	_ _ _ _ _ _ _			_ _ _ _ _ _ _		_ _ _ _ _ _ _
-_ _ _ _ _ _ _			_ _ _ _ _ _ _			_ _ _ _ _ _ _		_ _ _ _ _ _ _
-_ _ _ _ _ _ _			_ _ _ _ _ _ _			_ _ _ _ _ _ _		_ _ _ _ _ _ _
-_ _ _ _ _ _ _			_ _ _ _ _ _ _			_ _ _ _ _ _ _		_ _ _ _ _ _ _
-_ _ _ _ _ _ _			_ _ _ _ _ _ _			_ _ _ _ _ _ _		_ _ _ _ _ _ _
-_ _ _ _ _ _ _			_ _ _ _ _ _ _			_ _ _ _ _ _ _		_ _ _ _ _ _ _
-_ _ _ _ _ _ _			_ _ _ _ _ _ _			_ _ _ _ _ _ _		_ _ _ _ _ _ _
 
 
 
@@ -73,6 +66,8 @@ If false, counter set to 0 and checks other directions not checked or continues 
 If counter reaches four, the game loop is exited and the game ends.
 Upon game ending status bars change and a new game option is presented, reinitializing the mesh and entering the game loop again.
 Game can be exited at any time using Ctrl-q, status bar will inform user that Ctrl-q must be pressed 3 more times to exit.
+
+
 
 
 
