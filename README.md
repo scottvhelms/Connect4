@@ -15,7 +15,7 @@ Connect Four Design Document
      * USE ARROWS TO MOVE (  ->   or   <-  ) AND HIT ENTER TO DROP
  * Will contain a color coded status bar to represent which player's turn is in progress that is.
    * i.e.
-    * PLAYER 1'S TURN
+     * PLAYER 1'S TURN
 * Will identify when 4 of one player’s pieces are in a row vertically, diagonally, or horizontally.
 * Will apply a status bar upon player winning, with the option to start a new game
   * i.e
