@@ -4,27 +4,27 @@ Connect four game
 Connect Four Design Document
 
 Features
-This program will be a graphical representation of the Connect 4 game invented by Howard Wexler, and will have the following features:
-Will be a 7x7 slotted board in which players select a column in which to drop a token down the column until it hits the bottom or stacks on a previously “dropped” token in the attempt to place four tokens in a row vertically, diagonally, or horizontally. Game ends when such a row has been encountered.
-Will be a two-player game, with the players alternating and taking turns. 
-Will be graphically represented in the terminal using ASCII Characters.
-Will show real time status of the game as it is being played with the colors Red and Yellow representing the different players pieces.
-Will use the arrow keys for the players to move a piece about the board and the enter key to “drop” a piece in the correct location.
-Will contain a status bar with directions to complete the turn. 
-i.e.
-USE ARROWS TO MOVE (  ->   or   <-  ) AND HIT ENTER TO DROP
-Will contain a color coded status bar to represent which player's turn is in progress that is.
-i.e.
-PLAYER 1'S TURN
-Will identify when 4 of one player’s pieces are in a row vertically, diagonally, or horizontally.
-Will apply a status bar upon player winning, with the option to start a new game
-i.e
-PLAYER X HAS WON!!!!    PRESS ENTER TO START A NEW GAME
-Will contain a way to quit the game at any time, with a warning prior to exiting.
-Will utilize Ctrl-q to initiate quit and will need to be pressed three times.
-Game may be updated in the future to implement other features such as (but not limited to):
-Network compatibility
-No human player (single player)
+* This program will be a graphical representation of the Connect 4 game invented by Howard Wexler, and will have the following features:
+* Will be a 7x7 slotted board in which players select a column in which to drop a token down the column until it hits the bottom or stacks on a previously “dropped” token in the * attempt to place four tokens in a row vertically, diagonally, or horizontally. Game ends when such a row has been encountered.
+* Will be a two-player game, with the players alternating and taking turns. 
+* Will be graphically represented in the terminal using ASCII Characters.
+* Will show real time status of the game as it is being played with the colors Red and Yellow representing the different players pieces.
+* Will use the arrow keys for the players to move a piece about the board and the enter key to “drop” a piece in the correct location.
+* Will contain a status bar with directions to complete the turn. 
+  * i.e.
+     * USE ARROWS TO MOVE (  ->   or   <-  ) AND HIT ENTER TO DROP
+ * Will contain a color coded status bar to represent which player's turn is in progress that is.
+  * i.e.
+    * PLAYER 1'S TURN
+* Will identify when 4 of one player’s pieces are in a row vertically, diagonally, or horizontally.
+* Will apply a status bar upon player winning, with the option to start a new game
+  * i.e
+    * PLAYER X HAS WON!!!!    PRESS ENTER TO START A NEW GAME
+* Will contain a way to quit the game at any time, with a warning prior to exiting.
+* Will utilize Ctrl-q to initiate quit and will need to be pressed three times.
+* Game may be updated in the future to implement other features such as (but not limited to):
+* Network compatibility
+* No human player (single player)
 
 
 
