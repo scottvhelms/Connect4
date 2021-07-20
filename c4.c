@@ -120,11 +120,11 @@ void drawGameBoard()
 		/* +---+---+---+---+---+---+---+ */
 		/* |   |   | 0 |   |   |   |   | */
 		/* +---+---+---+---+---+---+---+ */
-		/* |   |   | @ |   |   |   |   | */
+		/* |   |   | O |   |   |   |   | */
 		/* +---+---+---+---+---+---+---+ */
-		/* |   |   | @ |   |   | 0 |   | */
+		/* |   |   | O |   |   | 0 |   | */
 		/* +---+---+---+---+---+---+---+ */
-		/* | 0 | @ | 0 | 0 | @ | @ |   | */
+		/* | 0 | O | 0 | 0 | O | O |   | */
 		/* +---+---+---+---+---+---+---+ */
 
 
@@ -149,7 +149,7 @@ void moveFloatingToken()
 
 /*** Gameplay Loop ***/
 
-void movetoken() /* section of code where all player interaction occurs */
+void moveToken() /* section of code where all player interaction occurs */
 {
 
 	while (1)
@@ -169,9 +169,14 @@ void movetoken() /* section of code where all player interaction occurs */
 
 char tokenPresent(int array[][7], int x, int y)
 {
+	int temp;
+	temp=array[x][y];
 	
+	if (temp == 1) return '0';
+	if (temp == 0) return 'O';
+//	if (temp < 0 ) return ' ';
 
-	return '0';
+	return ' ';
 }
 
 
@@ -184,7 +189,7 @@ void drop()
 
 
 
-int connnectFourPresent()
+int connectFourPresent()
 {
 
 
