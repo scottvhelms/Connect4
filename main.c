@@ -23,21 +23,16 @@
 	/*** init ***/
 void enableRaw(); 					//clears screen upon entering program
 void disableRaw(); 					//returns to previous environment after extiting program
-void initArray(int array[][7]); 			// creates 7x7 array and populates with EMPTY tokens
-void drawGameBoard(int array[][7], int moveCounter);	// Graphically represents game to terminal in ASCII characters 
+void initArray(); 					// creates 7x7 array and populates with EMPTY tokens
+void drawGameBoard();					// Graphically represents game to terminal in ASCII characters 
 int  getWindowSize(int *rows, int *cols);
 void die(const char *s); 				//error reader upon failure
 char* refPoint();					//used to determine center of the screen
 char* rePointOffset();					//used to offset in the x or y direction from the reference point
 
-
-	/*** input ***/
-void moveCursor();  					//moves cursor accross 7 possible zones above board 
-void moveFloatingToken(); 				//moves representation of token to drop under cursor 
-
 	/*** Gameplay loop***/
 void moveToken(); 					//moves cursor above game board to drop token
-char* tokenPresent(int array[][7], int x, int y);	//verify if toke is present and if so displays token correctly
+char* tokenPresent(int y, int x);					//verify if toke is present and if so displays token correctly
 void drop(); 						//drops token at the bottom of the array or stacks
 int connectFourPresent(); 				//searches from right to left, bottom to top for connect 4
 
@@ -48,7 +43,7 @@ void resetGame(); 					//endgame and reinit if players want to replay
 
 	/*** Status Bars***/
 void directionsSB(); 					//normally displayed directions
-void playerTurnSB(int moveCounter); 			//changes depending on players turn
+void playerTurnSB(); 					//changes depending on players turn
 void winnerSB();    					//upon connect four present true
 
 
@@ -65,26 +60,26 @@ struct editorConfig
 /***GameData***/
 enum token {EMPTY = -1, RED, YELLOW};
 struct editorConfig E;
-
+int array[7][7];
+int moveCounter = 0; 
 
 /*** main ***/
 
 int main()
 {
-	int gameData[7][7];
-	int moveCounter = 0;  
+ 
 
 	enableRaw();
-	initArray(gameData);	
+	initArray();	
 	
 	while(1)
 	{
 		/* drawGameBoard is prior to connectFourPresent so that upon */
 		/* a winning move the last token placement is displayed */
 		
-		drawGameBoard(gameData, moveCounter);		
+		drawGameBoard();		
 		connectFourPresent();
-		moveCursor();	
+		moveToken();	
 	}	
 
 	return 0;
@@ -122,7 +117,7 @@ void disableRaw()
 
 
 
-void initArray(int array[][7])
+void initArray()
 {
 	int i,j;	
 
@@ -137,7 +132,7 @@ void initArray(int array[][7])
 
 
 
-void drawGameBoard(int array[][7], int moveCounter)
+void drawGameBoard()
 {
 	/* ideal shape  */
 
@@ -160,7 +155,8 @@ void drawGameBoard(int array[][7], int moveCounter)
 	int i,j;
 	int counterx = 0;
 	int countery = 0;
-
+	
+	write(STDOUT_FILENO, "\x1b[?25l", 6);	
 	
 	if(getWindowSize(&E.screenrows, &E.screencols) == -1 ) die("getWindowSize");	//determine screen size
 
@@ -197,7 +193,7 @@ void drawGameBoard(int array[][7], int moveCounter)
 				}
 				else if ( (j-2)%4 == 0)
 				{
-					 write(STDOUT_FILENO, tokenPresent(array,countery++,counterx), 1 ); 
+					 write(STDOUT_FILENO, tokenPresent(countery++,counterx), 1 ); 
 				}
 				else write(STDOUT_FILENO, " ", 1 );
 
@@ -210,7 +206,7 @@ void drawGameBoard(int array[][7], int moveCounter)
 	}
 
 	directionsSB(); 			
-	playerTurnSB(moveCounter); 				
+	playerTurnSB(); 				
 	winnerSB(); 
 }
 
@@ -247,9 +243,10 @@ void die(const char *s)
 }
 
 
-/*** Input ***/
 
-void moveCursor()
+/*** Gameplay Loop ***/
+
+void moveToken()
 {
 	int nread;
 	char c;
@@ -257,6 +254,10 @@ void moveCursor()
 
 	write(STDOUT_FILENO, "\x1b[15A", 5); //cursor position and controll
 	write(STDOUT_FILENO, "\x1b[2C", 4);
+	write(STDOUT_FILENO, "O", 1);//FIXME
+	write(STDOUT_FILENO, "\x1b[D", 3);
+
+
 
 	while (1)
 	{
@@ -289,13 +290,21 @@ void moveCursor()
 			case 'C':					//right
 				if(index == 6)
 				{
-					write(STDOUT_FILENO, "\x1b[24D", 5);
+					write(STDOUT_FILENO, " ", 1);
+					write(STDOUT_FILENO, "\x1b[25D", 5);
+					write(STDOUT_FILENO, "O", 1);
+					write(STDOUT_FILENO, "\x1b[D", 3);
+
 					index = 0;
 				}
 				
 				else
 				{
-					write(STDOUT_FILENO, "\x1b[4C", 4);
+					write(STDOUT_FILENO, " ", 1);
+					write(STDOUT_FILENO, "\x1b[3C", 4);
+					write(STDOUT_FILENO, "O", 1);
+					write(STDOUT_FILENO, "\x1b[D", 3);
+				
 					index++;
 				}
 				
@@ -303,18 +312,33 @@ void moveCursor()
 			case 'D':					//left
 				if(index == 0)
 				{
-					write(STDOUT_FILENO, "\x1b[24C", 5);
+					write(STDOUT_FILENO, " ", 1);
+					write(STDOUT_FILENO, "\x1b[23C", 5);
+					write(STDOUT_FILENO, "O", 1);
+					write(STDOUT_FILENO, "\x1b[D", 3);
+
 					index = 6;
 				}
 				
 				else
 				{
-					write(STDOUT_FILENO, "\x1b[4D", 4);
+					write(STDOUT_FILENO, " ", 1);
+					write(STDOUT_FILENO, "\x1b[5D", 4);
+					write(STDOUT_FILENO, "O", 1);
+					write(STDOUT_FILENO, "\x1b[D", 3);
+
 					index--;
 				}
 
-				
 				break;
+
+			case '\r':
+				write(STDOUT_FILENO, "Q", 1);
+				write(STDOUT_FILENO, "\x1b[D", 4);
+
+				break;
+
+				
 	
 		}
 	}
@@ -322,34 +346,7 @@ void moveCursor()
 
 
 
-void moveFloatingToken() 
-{
-
-}
-
-
-
-/*** Gameplay Loop ***/
-
-void moveToken() /* section of code where all player interaction occurs */
-{
-
-	while (1)
-	{
-		/* switch statement for arrows, ctrl-q, enter */
-
-			/*arrows : moveCursor(), and moveFloatingToken() */
-			/*enter : drop() */
-			/*Ctrl-Q : quitGame() */
-
-	}
-
-}
-
-
-
-
-char* tokenPresent(int array[][7], int y, int x)
+char* tokenPresent(int y, int x)
 {
 	
 	if (array[x][y] == 0) return "X"; 	 //RED
@@ -413,7 +410,7 @@ void directionsSB()
 }
 
 
-void playerTurnSB(int moveCounter)
+void playerTurnSB()
 {
 	moveCounter++; //FIXME placeholder
 }
