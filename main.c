@@ -61,7 +61,7 @@ struct editorConfig
 enum token {EMPTY = -1, RED, YELLOW};
 struct editorConfig E;
 int array[7][7];
-int moveCounter = 0; 
+int moveCounter; 
 
 /*** main ***/
 
@@ -79,7 +79,8 @@ int main()
 		
 		drawGameBoard();		
 		connectFourPresent();
-		moveToken();	
+		moveToken();
+		moveCounter++;	
 	}	
 
 	return 0;
@@ -120,7 +121,7 @@ void disableRaw()
 void initArray()
 {
 	int i,j;	
-
+	moveCounter=0;
 	for (i=0; i<7; i++)
 	{
 		for (j=0; j<7; j++)
@@ -236,6 +237,7 @@ void die(const char *s)
 {
 	write(STDOUT_FILENO, "\x1b[2J", 4);
 	write(STDOUT_FILENO, "\x1b[H", 3);
+	write(STDOUT_FILENO, "\x1b[?23h", 6);
 
 	
 	perror(s);
@@ -250,12 +252,19 @@ void moveToken()
 {
 	int nread;
 	char c;
+	char * token;
 	int index = 0;
 	int end = 1;	
 
+	if(moveCounter%2 == 0)	token = "X";
+	else token = "O";
+		
+
+
+
 	write(STDOUT_FILENO, "\x1b[15A", 5); //cursor position and controll
 	write(STDOUT_FILENO, "\x1b[2C", 4);
-	write(STDOUT_FILENO, "O", 1);//FIXME
+	write(STDOUT_FILENO, token, 1);//FIXME
 	write(STDOUT_FILENO, "\x1b[D", 3);
 
 
@@ -279,21 +288,21 @@ void moveToken()
 
 		}	
 
-
-
 		switch (c)
 		{
 			case CTRL_KEY('q'):
 				write(STDOUT_FILENO, "\x1b[2J", 4);
 				write(STDOUT_FILENO, "\x1b[H", 3);
+				write(STDOUT_FILENO, "\x1b[?23h", 6);
 				exit(0);
 				break;
+
 			case 'C':					//right
 				if(index == 6)
 				{
 					write(STDOUT_FILENO, " ", 1);
 					write(STDOUT_FILENO, "\x1b[25D", 5);
-					write(STDOUT_FILENO, "O", 1);
+					write(STDOUT_FILENO, token, 1);
 					write(STDOUT_FILENO, "\x1b[D", 3);
 
 					index = 0;
@@ -303,7 +312,7 @@ void moveToken()
 				{
 					write(STDOUT_FILENO, " ", 1);
 					write(STDOUT_FILENO, "\x1b[3C", 4);
-					write(STDOUT_FILENO, "O", 1);
+					write(STDOUT_FILENO, token, 1);
 					write(STDOUT_FILENO, "\x1b[D", 3);
 				
 					index++;
@@ -315,7 +324,7 @@ void moveToken()
 				{
 					write(STDOUT_FILENO, " ", 1);
 					write(STDOUT_FILENO, "\x1b[23C", 5);
-					write(STDOUT_FILENO, "O", 1);
+					write(STDOUT_FILENO, token, 1);
 					write(STDOUT_FILENO, "\x1b[D", 3);
 
 					index = 6;
@@ -325,7 +334,7 @@ void moveToken()
 				{
 					write(STDOUT_FILENO, " ", 1);
 					write(STDOUT_FILENO, "\x1b[5D", 4);
-					write(STDOUT_FILENO, "O", 1);
+					write(STDOUT_FILENO, token, 1);
 					write(STDOUT_FILENO, "\x1b[D", 3);
 
 					index--;
@@ -368,7 +377,15 @@ int drop(int index)
 	{
 		if(array[i][index] == EMPTY)
 		{
-			array[i][index] = YELLOW;//FIXME place holer
+			if((moveCounter%2) == 0)
+			{
+				array[i][index] = RED;
+
+			} 			
+			else
+			{ 
+				array[i][index] = YELLOW;
+			}
 			break;
 		}
 	}
@@ -425,7 +442,7 @@ void directionsSB()
 
 void playerTurnSB()
 {
-	moveCounter++; //FIXME placeholder
+
 }
 
 
