@@ -19,31 +19,31 @@
 
 
 	/*** init ***/
-void enableRaw(); 				//clears screen upon entering program
-void disableRaw(); 				//returns to previous environment after extiting program
-void initArray(int array[][7]); 		// creates 7x7 array and populates with EMPTY tokens
-void drawGameBoard(int array[][7]);		// Graphically represents game to terminal in ASCII characters 
-void die(const char *s); 			//error reader upon failure
+void enableRaw(); 					//clears screen upon entering program
+void disableRaw(); 					//returns to previous environment after extiting program
+void initArray(int array[][7]); 			// creates 7x7 array and populates with EMPTY tokens
+void drawGameBoard(int array[][7], int moveCounter);	// Graphically represents game to terminal in ASCII characters 
+void die(const char *s); 				//error reader upon failure
 
 	/*** input ***/
-void moveCursor();  				//moves cursor accross 7 possible zones above board 
-void moveFloatingToken(); 			//moves representation of token to drop under cursor 
+void moveCursor();  					//moves cursor accross 7 possible zones above board 
+void moveFloatingToken(); 				//moves representation of token to drop under cursor 
 
 	/*** Gameplay loop***/
-void moveToken(); 				//moves cursor above game board to drop token
-char tokenPresent(int array[][7], int x, int y);//verify if toke is present and if so displays token correctly
-void drop(); 					//drops token at the bottom of the array or stacks
-int connectFourPresent(); 			//searches from right to left, bottom to top for connect 4
+void moveToken(); 					//moves cursor above game board to drop token
+char* tokenPresent(int array[][7], int x, int y);	//verify if toke is present and if so displays token correctly
+void drop(); 						//drops token at the bottom of the array or stacks
+int connectFourPresent(); 				//searches from right to left, bottom to top for connect 4
 
 	/*** Game wrapup***/
-void endGame(); 				//endgame upon winning 
-void quitGame(); 				//quitting with ctrl-q 
-void resetGame(); 				//endgame and reinit if players want to replay
+void endGame(); 					//endgame upon winning 
+void quitGame(); 					//quitting with ctrl-q 
+void resetGame(); 					//endgame and reinit if players want to replay
 
 	/*** Status Bars***/
-void directionsSB(); 				//normally displayed directions
-void playerTurnSB(); 				//changes depending on players turn
-void winnerSB();     				//upon connect four present true
+void directionsSB(); 					//normally displayed directions
+void playerTurnSB(); 					//changes depending on players turn
+void winnerSB();    					//upon connect four present true
 
 
 
@@ -58,7 +58,7 @@ struct termios orig_termios;
 int main()
 {
 	int gameData[7][7];
-	//int moveCounter = 0;  /* might need to track move, could be used for to decide whose turn it is */
+	int moveCounter = 0;  
 
 	enableRaw();
 	initArray(gameData);	
@@ -68,7 +68,7 @@ int main()
 		/* drawGameBoard is prior to connectFourPresent so that upon */
 		/* a winning move the last token placement is displayed */
 		
-		drawGameBoard(gameData);		
+		drawGameBoard(gameData, moveCounter);		
 		connectFourPresent();
 		moveCursor();	
 	}	
@@ -110,29 +110,21 @@ void disableRaw()
 
 void initArray(int array[][7])
 {
-	int i,j;
+	int i,j;	
 
 	for (i=0; i<7; i++)
 	{
 		for (j=0; j<7; j++)
 		{
-			array[i][j] = RED; //FIXME should be EMPTY
+			array[i][j] = EMPTY;
 		}
 	} 
 } 
 
 
 
-void drawGameBoard(int array[][7])
+void drawGameBoard(int array[][7], int moveCounter)
 {
-	/*Two possible ways:*/
-	/* Display one long script with 49 calls to tokenPresent()*/
-	/* 	ie "| %c | %c | %c | %c | %c | %c | %c |", tokenPresent(),tokenPresent()....   */
-	/* Or */
-	/* For loop with if statments using index%x to determine which line should have which charcters */
-	/* second for loop for the lines that contain tokens to use tokenPresent with a counter */     
- 
-
 	/* ideal shape  */
 
 		/* +---+---+---+---+---+---+---+ */
@@ -151,41 +143,55 @@ void drawGameBoard(int array[][7])
 		/* | X | O | X | X | O | O |   | */
 		/* +---+---+---+---+---+---+---+ */
 
-
-//	printf("+---+---+---+---+---+---+---+\n| %d | %d | %d | %d | %d | %d | %d |\n+---+---+---+---+---+---+---+\n| %d | %d | %d | %d | %d | %d | %d |\n+---+---+---+---+---+---+---+\n| %d | %d | %d | %d | %d | %d | %d |\n+---+---+---+---+---+---+---+\n| %d | %d | %d | %d | %d | %d | %d |\n+---+---+---+---+---+---+---+\n| %d | %d | %d | %d | %d | %d | %d |\n+---+---+---+---+---+---+---+\n| %d | %d | %d | %d | %d | %d | %d |\n+---+---+---+---+---+---+---+\n| %d | %d | %d | %d | %d | %d | %d |\n+---+---+---+---+---+---+---+\n", array[0][0],array[0][0],array[0][0],array[0][0],array[0][0],array[0][0],array[0][0],array[0][0],array[0][0],array[0][0],array[0][0],array[0][0],array[0][0],array[0][0],array[0][0],array[0][0],array[0][0],array[0][0],array[0][0],array[0][0],array[0][0],array[0][0],array[0][0],array[0][0],array[0][0],array[0][0],array[0][0],array[0][0],array[0][0],array[0][0],array[0][0],array[0][0],array[0][0],array[0][0],array[0][0],array[0][0],array[0][0],array[0][0],array[0][0],array[0][0],array[0][0],array[0][0],array[0][0],array[0][0],array[0][0],array[0][0],array[0][0],array[0][0],array[0][0]);
-	
-
-
 	int i,j;
 	int counterx = 0;
 	int countery = 0;
+
+
+	write(STDOUT_FILENO, "\x1b[2J", 4);
+	write(STDOUT_FILENO, "\x1b[H", 3);
+
+
+
+	
+
 	for (i=0; i<15; i++)
 	{
-		if(i%2 == 0) printf("+---+---+---+---+---+---+---+\n");
+		if(i%2 == 0) write(STDOUT_FILENO, "+---+---+---+---+---+---+---+\r\n", 31);
 		else
 		{
 			for(j=0;j<29;j++)
 			{
-				if(j%4 == 0) printf("|");
-				else if( (j-2)%4 == 0) printf("%d", array[counterx][countery]);
-				else printf(" ");	
+				if(j%4 == 0)
+				{	
+					write(STDOUT_FILENO, "|", 1 );
+					if(j == 28) write(STDOUT_FILENO, "\r", 2 );
+				}
+				else if ( (j-2)%4 == 0)
+				{
+					 write(STDOUT_FILENO, tokenPresent(array,countery++,counterx), 1 ); 
+				}
+				else write(STDOUT_FILENO, " ", 1 );
+
 			}
 			countery = 0;
 			counterx++;
 			printf("\n");
-
 		}
-		
-
-
 	}
 
-
+	directionsSB(); 			
+	playerTurnSB(); 				
+	winnerSB(); 
 }
 
 
 void die(const char *s)
 {
+	write(STDOUT_FILENO, "\x1b[2J", 4);
+	write(STDOUT_FILENO, "\x1b[H", 3);
+
+	
 	perror(s);
 	exit(1);
 }
@@ -197,6 +203,11 @@ void moveCursor()
 {
 	int nread;
 	char c;
+	
+	write(STDOUT_FILENO, "\x1b[H", 3); //cursor position and controll
+
+
+
 
 	while ((nread = read(STDIN_FILENO, &c, 1)) != 1)
 	{
@@ -206,6 +217,8 @@ void moveCursor()
 	switch (c)
 	{
 		case CTRL_KEY('q'):
+			write(STDOUT_FILENO, "\x1b[2J", 4);
+			write(STDOUT_FILENO, "\x1b[H", 3);
 			exit(0);
 			break;
 	
@@ -241,16 +254,14 @@ void moveToken() /* section of code where all player interaction occurs */
 
 
 
-char tokenPresent(int array[][7], int x, int y)
+char* tokenPresent(int array[][7], int y, int x)
 {
-	int temp;
-	temp=array[x][y];
 	
-	if (temp == 1) return '0';
-	if (temp == 0) return 'O';
+	if (array[x][y] == 0) return "X"; 	 //RED
+	if (array[x][y] == 1) return "O";	 //YELLOW
 //	if (temp < 0 ) return ' ';
 
-	return ' ';
+	return " ";	//EMPTY
 }
 
 
