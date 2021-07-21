@@ -33,7 +33,7 @@ char* rePointOffset();					//used to offset in the x or y direction from the ref
 	/*** Gameplay loop***/
 void moveToken(); 					//moves cursor above game board to drop token
 char* tokenPresent(int y, int x);					//verify if toke is present and if so displays token correctly
-void drop(); 						//drops token at the bottom of the array or stacks
+int drop(int index); 						//drops token at the bottom of the array or stacks
 int connectFourPresent(); 				//searches from right to left, bottom to top for connect 4
 
 	/*** Game wrapup***/
@@ -250,7 +250,8 @@ void moveToken()
 {
 	int nread;
 	char c;
-	int index = 0;	
+	int index = 0;
+	int end = 1;	
 
 	write(STDOUT_FILENO, "\x1b[15A", 5); //cursor position and controll
 	write(STDOUT_FILENO, "\x1b[2C", 4);
@@ -259,7 +260,7 @@ void moveToken()
 
 
 
-	while (1)
+	while (end)
 	{
 		while ((nread = read(STDIN_FILENO, &c, 1)) != 1)
 		{
@@ -333,8 +334,8 @@ void moveToken()
 				break;
 
 			case '\r':
-				write(STDOUT_FILENO, "Q", 1);
-				write(STDOUT_FILENO, "\x1b[D", 4);
+				if(drop(index)) end--;
+					
 
 				break;
 
@@ -358,8 +359,20 @@ char* tokenPresent(int y, int x)
 
 
 
-void drop()
+int drop(int index)
 {
+	int i;
+
+	if (array[0][index] != EMPTY) return 0;
+	for(i=6; i>=0; i--)
+	{
+		if(array[i][index] == EMPTY)
+		{
+			array[i][index] = YELLOW;//FIXME place holer
+			break;
+		}
+	}
+	return 1;
 
 }
 
