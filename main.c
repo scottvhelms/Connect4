@@ -21,31 +21,29 @@
 
 
 	/*** init ***/
-void enableRaw(); 					//clears screen upon entering program
-void disableRaw(); 					//returns to previous environment after extiting program
-void initArray(); 					// creates 7x7 array and populates with EMPTY tokens
-void drawGameBoard();					// Graphically represents game to terminal in ASCII characters 
+void enableRaw(); 									//clears screen upon entering program
+void disableRaw(); 									//returns to previous environment after extiting program
+void initArray(); 									// creates 7x7 array and populates with EMPTY tokens
+void drawGameBoard();									// Graphically represents game to terminal in ASCII characters 
 int  getWindowSize(int *rows, int *cols);
-void die(const char *s); 				//error reader upon failure
-char* refPoint();					//used to determine center of the screen
-char* rePointOffset();					//used to offset in the x or y direction from the reference point
+void die(const char *s); 								//error reader upon failure
 
 	/*** Gameplay loop***/
-void moveToken(); 					//moves cursor above game board to drop token
-char* tokenPresent(int y, int x);					//verify if toke is present and if so displays token correctly
-int drop(int index); 						//drops token at the bottom of the array or stacks
-int connectFourPresent(); 				//searches from right to left, bottom to top for connect 4
+void moveToken(); 									//moves cursor above game board to drop token
+char* tokenPresent(int y, int x);							//verify if toke is present and if so displays token correctly
+int drop(int index); 									//drops token at the bottom of the array or stacks
+int connectFourPresent(); 								//searches from right to left, bottom to top for connect 4
 
 	/*** Game wrapup***/
-void endGame(); 					//endgame upon winning 
-void quitGame(); 					//quitting with ctrl-q 
-void resetGame(); 					//endgame and reinit if players want to replay
+void endGame(); 									//endgame upon winning 
+void quitGame(); 									//quitting with ctrl-q 
+void resetGame(); 									//endgame and reinit if players want to replay
 
 	/*** Status Bars***/
-void directionsSB(); 					//normally displayed directions
-void playerTurnSB(); 					//changes depending on players turn
-void winnerSB();    					//upon connect four present true
-
+void directionsSB(); 									//normally displayed directions
+void playerTurnSB(); 									//changes depending on players turn
+void winnerSB();    									//upon connect four present true
+			
 
 /***Structures***/
 struct editorConfig
@@ -74,8 +72,8 @@ int main()
 	
 	while(1)
 	{
-		/* drawGameBoard is prior to connectFourPresent so that upon */
-		/* a winning move the last token placement is displayed */
+											// drawGameBoard is prior to connectFourPresent so that upon 
+											// a winning move the last token placement is displayed 
 		
 		drawGameBoard();		
 		connectFourPresent();
@@ -135,24 +133,6 @@ void initArray()
 
 void drawGameBoard()
 {
-	/* ideal shape  */
-
-		/* +---+---+---+---+---+---+---+ */
-		/* |   |   |   |   |   |   |   | */
-		/* +---+---+---+---+---+---+---+ */
-		/* |   |   |   |   |   |   |   | */
-		/* +---+---+---+---+---+---+---+ */
-		/* |   |   |   |   |   |   |   | */
-		/* +---+---+---+---+---+---+---+ */
-		/* |   |   | X |   |   |   |   | */
-		/* +---+---+---+---+---+---+---+ */
-		/* |   |   | X |   |   |   |   | */
-		/* +---+---+---+---+---+---+---+ */
-		/* |   |   | O |   |   | X |   | */
-		/* +---+---+---+---+---+---+---+ */
-		/* | X | O | X | X | O | O |   | */
-		/* +---+---+---+---+---+---+---+ */
-
 	int i,j;
 	int counterx = 0;
 	int countery = 0;
@@ -243,7 +223,7 @@ void die(const char *s)
 	perror(s);
 	exit(1);
 }
-
+	
 
 
 /*** Gameplay Loop ***/
@@ -262,7 +242,7 @@ void moveToken()
 
 
 
-	write(STDOUT_FILENO, "\x1b[15A", 5); //cursor position and controll
+	write(STDOUT_FILENO, "\x1b[15A", 5);						 //cursor position and controll
 	write(STDOUT_FILENO, "\x1b[2C", 4);
 	write(STDOUT_FILENO, token, 1);//FIXME
 	write(STDOUT_FILENO, "\x1b[D", 3);
@@ -297,7 +277,7 @@ void moveToken()
 				exit(0);
 				break;
 
-			case 'C':					//right
+			case 'C':							//right
 				if(index == 6)
 				{
 					write(STDOUT_FILENO, " ", 1);
@@ -319,7 +299,7 @@ void moveToken()
 				}
 				
 				break;
-			case 'D':					//left
+			case 'D':							//left
 				if(index == 0)
 				{
 					write(STDOUT_FILENO, " ", 1);
@@ -359,11 +339,9 @@ void moveToken()
 char* tokenPresent(int y, int x)
 {
 	
-	if (array[x][y] == 0) return "X"; 	 //RED
-	if (array[x][y] == 1) return "O";	 //YELLOW
-//	if (temp < 0 ) return ' ';
-
-	return " ";	//EMPTY
+	if (array[x][y] == 0) return "X"; 						//RED
+	if (array[x][y] == 1) return "O";						//YELLOW
+	return " ";									//EMPTY
 }
 
 
@@ -433,8 +411,6 @@ void resetGame()
 
 void directionsSB()
 {
-//	write(STDOUT_FILENO, "\x1b[H", 3);
-//	write(STDOUT_FILENO, "WELCOME TO CONNECT FOUR", 
 
  
 }
