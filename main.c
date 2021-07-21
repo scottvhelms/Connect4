@@ -5,9 +5,11 @@
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/ioctl.h>
 #include <termios.h>
 #include <unistd.h>
 
+#define CTRL_KEY(k) ((k) & 0x1f)
 
 
 
@@ -23,7 +25,11 @@ void enableRaw(); 					//clears screen upon entering program
 void disableRaw(); 					//returns to previous environment after extiting program
 void initArray(int array[][7]); 			// creates 7x7 array and populates with EMPTY tokens
 void drawGameBoard(int array[][7], int moveCounter);	// Graphically represents game to terminal in ASCII characters 
+int  getWindowSize(int *rows, int *cols);
 void die(const char *s); 				//error reader upon failure
+char* refPoint();					//used to determine center of the screen
+char* rePointOffset();					//used to offset in the x or y direction from the reference point
+
 
 	/*** input ***/
 void moveCursor();  					//moves cursor accross 7 possible zones above board 
@@ -42,15 +48,23 @@ void resetGame(); 					//endgame and reinit if players want to replay
 
 	/*** Status Bars***/
 void directionsSB(); 					//normally displayed directions
-void playerTurnSB(); 					//changes depending on players turn
+void playerTurnSB(int moveCounter); 			//changes depending on players turn
 void winnerSB();    					//upon connect four present true
+
+
+/***Structures***/
+struct editorConfig
+{
+	int screenrows;
+	int screencols;
+	struct termios orig_termios;
+};
 
 
 
 /***GameData***/
-#define CTRL_KEY(k) ((k) & 0x1f)
 enum token {EMPTY = -1, RED, YELLOW};
-struct termios orig_termios;
+struct editorConfig E;
 
 
 /*** main ***/
@@ -84,10 +98,10 @@ int main()
 
 void enableRaw()
 {
-	if(tcgetattr(STDIN_FILENO, &orig_termios) == -1) die("tsgetattr");
+	if(tcgetattr(STDIN_FILENO, &E.orig_termios) == -1) die("tsgetattr");
 	atexit(disableRaw);
 
-	struct termios raw = orig_termios;
+	struct termios raw = E.orig_termios;
 
 	raw.c_iflag &= ~( BRKINT | ICRNL | INPCK | ISTRIP | IXON );
 	raw.c_oflag &= ~( OPOST );
@@ -103,7 +117,7 @@ void enableRaw()
 
 void disableRaw()
 {
-	if(tcsetattr(STDIN_FILENO, TCSAFLUSH, &orig_termios) == -1) die("tcsetattr");
+	if(tcsetattr(STDIN_FILENO, TCSAFLUSH, &E.orig_termios) == -1) die("tcsetattr");
 }
 
 
@@ -147,17 +161,31 @@ void drawGameBoard(int array[][7], int moveCounter)
 	int counterx = 0;
 	int countery = 0;
 
-
-	write(STDOUT_FILENO, "\x1b[2J", 4);
-	write(STDOUT_FILENO, "\x1b[H", 3);
-
+	
+	if(getWindowSize(&E.screenrows, &E.screencols) == -1 ) die("getWindowSize");	//determine screen size
 
 
+	write(STDOUT_FILENO, "\x1b[2J", 4);						//clears screen
+	write(STDOUT_FILENO, "\x1b[H", 3);						// return cursor to 1,1
+
+		
+	for(i=0; i<(E.screenrows/2)-13; i++)  write(STDOUT_FILENO, "\x1b[B", 3);	//centers and moves cursor to the beginning of the game screen
+	for(i=0; i<(E.screencols/2)-6; i++) write(STDOUT_FILENO, "\x1b[C", 3);		
 	
 
-	for (i=0; i<15; i++)
-	{
-		if(i%2 == 0) write(STDOUT_FILENO, "+---+---+---+---+---+---+---+\r\n", 31);
+	write(STDOUT_FILENO, "CONNECT FOUR", 12);
+	write(STDOUT_FILENO, "\x1b[7B", 4);						// moves down to were the board will be
+	write(STDOUT_FILENO, "\x1b[21D", 5);		
+
+		
+	for (i=0; i<15; i++)								//draws game board
+	{			
+		write(STDOUT_FILENO, "\x1b[B", 3);	
+		if(i%2 == 0) 
+		{
+			
+			write(STDOUT_FILENO, "+---+---+---+---+---+---+---+", 29);
+		}
 		else
 		{
 			for(j=0;j<29;j++)
@@ -165,7 +193,7 @@ void drawGameBoard(int array[][7], int moveCounter)
 				if(j%4 == 0)
 				{	
 					write(STDOUT_FILENO, "|", 1 );
-					if(j == 28) write(STDOUT_FILENO, "\r", 2 );
+		
 				}
 				else if ( (j-2)%4 == 0)
 				{
@@ -176,14 +204,36 @@ void drawGameBoard(int array[][7], int moveCounter)
 			}
 			countery = 0;
 			counterx++;
-			printf("\n");
 		}
+		write(STDOUT_FILENO, "\x1b[29D", 5);
+
 	}
 
 	directionsSB(); 			
-	playerTurnSB(); 				
+	playerTurnSB(moveCounter); 				
 	winnerSB(); 
 }
+
+
+
+int getWindowSize(int *rows, int *cols)
+{
+	struct winsize ws;
+	
+	if(ioctl(STDOUT_FILENO, TIOCGWINSZ, &ws) == -1 || ws.ws_col == 0)
+	{
+		return -1;
+	}
+	else
+	{
+		*cols = ws.ws_col;
+		*rows = ws.ws_row;
+		return 0;
+	}
+
+
+}
+
 
 
 void die(const char *s)
@@ -203,25 +253,70 @@ void moveCursor()
 {
 	int nread;
 	char c;
-	
-	write(STDOUT_FILENO, "\x1b[H", 3); //cursor position and controll
+	int index = 0;	
 
+	write(STDOUT_FILENO, "\x1b[15A", 5); //cursor position and controll
+	write(STDOUT_FILENO, "\x1b[2C", 4);
 
-
-
-	while ((nread = read(STDIN_FILENO, &c, 1)) != 1)
+	while (1)
 	{
-		if(nread == -1 && errno != EAGAIN) die("read");
-	}
+		while ((nread = read(STDIN_FILENO, &c, 1)) != 1)
+		{
+			if(nread == -1 && errno != EAGAIN) die("read");
+		}
 
-	switch (c)
-	{
-		case CTRL_KEY('q'):
-			write(STDOUT_FILENO, "\x1b[2J", 4);
-			write(STDOUT_FILENO, "\x1b[H", 3);
-			exit(0);
-			break;
+		if(c == '\x1b')
+		{
+			if(read(STDIN_FILENO, &c, 1) == -1) die("read");
+			if(c == '[') 
+			{
+				if(read(STDIN_FILENO, &c, 1) == -1) die("read");
+
+			}	
+
+
+		}	
+
+
+
+		switch (c)
+		{
+			case CTRL_KEY('q'):
+				write(STDOUT_FILENO, "\x1b[2J", 4);
+				write(STDOUT_FILENO, "\x1b[H", 3);
+				exit(0);
+				break;
+			case 'C':					//right
+				if(index == 6)
+				{
+					write(STDOUT_FILENO, "\x1b[24D", 5);
+					index = 0;
+				}
+				
+				else
+				{
+					write(STDOUT_FILENO, "\x1b[4C", 4);
+					index++;
+				}
+				
+				break;
+			case 'D':					//left
+				if(index == 0)
+				{
+					write(STDOUT_FILENO, "\x1b[24C", 5);
+					index = 6;
+				}
+				
+				else
+				{
+					write(STDOUT_FILENO, "\x1b[4D", 4);
+					index--;
+				}
+
+				
+				break;
 	
+		}
 	}
 }
 
@@ -311,13 +406,16 @@ void resetGame()
 
 void directionsSB()
 {
+//	write(STDOUT_FILENO, "\x1b[H", 3);
+//	write(STDOUT_FILENO, "WELCOME TO CONNECT FOUR", 
 
+ 
 }
 
 
-void playerTurnSB()
+void playerTurnSB(int moveCounter)
 {
-
+	moveCounter++; //FIXME placeholder
 }
 
 
