@@ -1,6 +1,6 @@
-// Connect Four 
-// Author: Scott Helms 
-
+// Connect Four
+// Author: Scott Helms
+//
 #include <ctype.h>
 #include <errno.h>
 #include <stdio.h>
