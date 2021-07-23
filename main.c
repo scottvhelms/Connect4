@@ -105,6 +105,20 @@ void winnerStatusBar();
 // Helper function for constructing and executing write()
 void moveCursor(int amount, char* direction);
 
+// Helper function for displaying strings to game by executing write
+void display(char* item);
+
+// Helper funtion the clears screen
+void clearScreen();
+
+// Helper funtion the hides the cursor
+void hideCursor();
+
+// Helper function that unhids the cursor
+void unhideCursor();
+
+
+
 /*** init ***/
 
 void enableRawInputMode(GameDataElements* GameData) {
@@ -162,10 +176,10 @@ void initGameData(GameDataElements* GameData) {
 
 void drawGameBoard(GameDataElements* GameData) {
   // hides cursor
-  write(STDOUT_FILENO, HIDE, 6);
+  hideCursor();
 
   // clears screen
-  write(STDOUT_FILENO, CLEAR, 4);
+  clearScreen();
 
   // return cursor to 1,1
   moveCursor(0, CORNER);
@@ -184,7 +198,7 @@ void drawGameBoard(GameDataElements* GameData) {
   // moves down to where the board will be
   moveCursor(7, DOWN);
 
-  DEmoveCursor(21, LEFT);
+  moveCursor(21, LEFT);
 
   // draws game board
   int counter_x = 0;
@@ -193,16 +207,15 @@ void drawGameBoard(GameDataElements* GameData) {
     moveCursor(1, DOWN);
 
     if (i % 2 == 0) {
-      write(STDOUT_FILENO, "+---+---+---+---+---+---+---+", 29);
+      display("+---+---+---+---+---+---+---+");
     } else {
       for (j = 0; j < 29; j++) {
         if (j % 4 == 0) {
-          write(STDOUT_FILENO, "|", 1);
+          display("|");
         } else if ((j - 2) % 4 == 0) {
-          write(STDOUT_FILENO, tokenAtIndex(GameData, counter_y++, counter_x),
-                1);
+          display(tokenAtIndex(GameData, counter_y++, counter_x));
         } else
-          write(STDOUT_FILENO, " ", 1);
+          display(" ");
       }
       counter_y = 0;
       counter_x++;
@@ -230,11 +243,11 @@ int getWindowSize(int* out_rows, int* out_cols) {
 
 void die(GameDataElements* GameData, const char* s) {
   // clear screen
-  write(STDOUT_FILENO, CLEAR, 4);
+  clearScreen();  
   // move cursor to upper left hand corner
   moveCursor(0, CORNER);
   // unhide cursor
-  write(STDOUT_FILENO, UNHIDE, 6);
+  unhideCursor();
 
   disableRawInputMode(GameData);
 
@@ -256,7 +269,7 @@ void playerInput(GameDataElements* GameData) {
   // places cursor above graphic representation of array[0][0]
   moveCursor(15, UP);
   moveCursor(2, RIGHT);
-  write(STDOUT_FILENO, token, 1);
+  display(token);  
   moveCursor(1, LEFT);
 
   // loop for player entry
@@ -288,11 +301,11 @@ void playerInput(GameDataElements* GameData) {
     switch (c) {
     case CTRL_KEY('q'):
       // clear screen
-      write(STDOUT_FILENO, CLEAR, 4);
+      clearScreen();      
       // move cursor to upper left hand corner
       moveCursor(0, CORNER);
       // unhide cursor
-      write(STDOUT_FILENO, UNHIDE, 6);
+      unhideCursor();
       disableRawInputMode(GameData);
       exit(0);
       break;
@@ -301,18 +314,16 @@ void playerInput(GameDataElements* GameData) {
     case 'C':
       // wrap logic
       if (index == 6) {
-        write(STDOUT_FILENO, " ", 1);
+	display(" "); 
         moveCursor(25, LEFT);
-        write(STDOUT_FILENO, token, 1);
+	display(token); 
         moveCursor(1, LEFT);
-
         index = 0;
       } else {
-        write(STDOUT_FILENO, " ", 1);
+	display(" "); 
         moveCursor(3, RIGHT);
-        write(STDOUT_FILENO, token, 1);
+	display(token); 
         moveCursor(1, LEFT);
-
         index++;
       }
 
@@ -322,18 +333,16 @@ void playerInput(GameDataElements* GameData) {
     case 'D':
       // wrap logic
       if (index == 0) {
-        write(STDOUT_FILENO, " ", 1);
+	display(" "); 
         moveCursor(23, RIGHT);
-        write(STDOUT_FILENO, token, 1);
+	display(token); 
         moveCursor(1, LEFT);
-
         index = 6;
       } else {
-        write(STDOUT_FILENO, " ", 1);
+	display(" "); 
         moveCursor(5, LEFT);
-        write(STDOUT_FILENO, token, 1);
+	display(token); 
         moveCursor(1, LEFT);
-
         index--;
       }
 
@@ -417,6 +426,28 @@ void moveCursor(int amount, char* direction) {
 
   write(STDOUT_FILENO, esc, sizeof(esc));
 }
+
+void display(char* item){
+
+
+	write(STDOUT_FILENO, item, strlen(item));
+
+
+}
+
+void clearScreen(){
+  write(STDOUT_FILENO, CLEAR, 4);
+
+}
+
+void hideCursor(){
+  write(STDOUT_FILENO, HIDE, 6);
+}
+
+void unhideCursor(){
+  write(STDOUT_FILENO, UNHIDE, 6);
+}
+
 
 /*** main ***/
 
