@@ -19,6 +19,9 @@
 #define LEFT "D"
 #define ESC "\x1b["
 #define CORNER "H"
+#define HIDE "\x1b[?25l"
+#define UNHIDE "\x1b[?25h"
+#define CLEAR "\x1b[2J"
 
 /*** enum ***/
 
@@ -159,10 +162,10 @@ void initGameData(GameDataElements* GameData) {
 
 void drawGameBoard(GameDataElements* GameData) {
   // hides cursor
-  write(STDOUT_FILENO, "\x1b[?25l", 6);
+  write(STDOUT_FILENO, HIDE, 6);
 
   // clears screen
-  write(STDOUT_FILENO, "\x1b[2J", 4);
+  write(STDOUT_FILENO, CLEAR, 4);
 
   // return cursor to 1,1
   moveCursor(0, CORNER);
@@ -181,7 +184,7 @@ void drawGameBoard(GameDataElements* GameData) {
   // moves down to where the board will be
   moveCursor(7, DOWN);
 
-  moveCursor(21, LEFT);
+  DEmoveCursor(21, LEFT);
 
   // draws game board
   int counter_x = 0;
@@ -227,11 +230,11 @@ int getWindowSize(int* out_rows, int* out_cols) {
 
 void die(GameDataElements* GameData, const char* s) {
   // clear screen
-  write(STDOUT_FILENO, "\x1b[2J", 4);
+  write(STDOUT_FILENO, CLEAR, 4);
   // move cursor to upper left hand corner
   moveCursor(0, CORNER);
   // unhide cursor
-  write(STDOUT_FILENO, "\x1b[?25h", 6);
+  write(STDOUT_FILENO, UNHIDE, 6);
 
   disableRawInputMode(GameData);
 
@@ -285,11 +288,11 @@ void playerInput(GameDataElements* GameData) {
     switch (c) {
     case CTRL_KEY('q'):
       // clear screen
-      write(STDOUT_FILENO, "\x1b[2J", 4);
+      write(STDOUT_FILENO, CLEAR, 4);
       // move cursor to upper left hand corner
       moveCursor(0, CORNER);
       // unhide cursor
-      write(STDOUT_FILENO, "\x1b[?25h", 6);
+      write(STDOUT_FILENO, UNHIDE, 6);
       disableRawInputMode(GameData);
       exit(0);
       break;
