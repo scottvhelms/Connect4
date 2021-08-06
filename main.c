@@ -29,24 +29,37 @@ enum token { EMPTY = -1, RED, YELLOW };
 
 /*** Structures ***/
 
-struct TerminalHandle {
+typedef struct TerminalHandle {
+  int successful_initialization;
   int screen_rows;
   int screen_cols;
   struct termios orig_termios;
-};
+}TerminalSettingsData;
+
+typedef struct CursorLocation{
+	int row;
+	int col;
+}CursorLocation;
 
 typedef struct GameDataElements {
-  struct TerminalHandle E;
   int array[7][7];
   int move_counter;
-} GameDataElements;
+  CursorLocation ConnectFourTitleLocation;
+  CursorLocation GameBoardLocation;
+  CursorLocation FirstTokenLocation;
+  CursorLocation PlayersInitialLocation;
+  CursorLocation PlayerTurnStatusBoardLocation;
+  CursorLocation DirectionsStatusBoardLocation;
+  CursorLocation WinnerStatusBoardLocation;
+}GameDataElements;
+
 
 /*** prototypes ***/
 
 /** init **/
 
 // This function clears screen upon entering program.
-void enableRawInputMode(GameDataElements* GameData);
+int enableRawInputMode(struct termios OriginalTerminal, char* error_message);
 
 // This function returns to previous terminal environment after exiting program.
 void disableRawInputMode(GameDataElements* GameData);
@@ -56,13 +69,13 @@ void initGameData(GameDataElements* GameData);
 
 // This function graphically represents game in the terminal in ASCII
 // characters.
-void drawGameBoard(GameDataElements* GameData);
+void displayGameBoard(GameDataElements* GameData);
 
 // This function gets the terminal size, which is used to center display.
 int getWindowSize(int* out_rows, int* out_cols);
 
 // This function reads an error name upon program failure.
-void die(GameDataElements* GameData, const char* s);
+void die();//GameDataElements* GameData, const char* s);
 
 /** Gameplay loop **/
 
@@ -71,7 +84,7 @@ void playerInput(GameDataElements* GameData);
 
 // This function verifies if atoken is present at the y and x index.
 // If token is present, it is displayed on the screen.
-char* tokenAtIndex(GameDataElements* GameData, int y, int x);
+char* tokenAt(GameDataElements* GameData, int y, int x);
 
 // This function drops token to the bottom of the array or stacks on top of
 // previously placed tokens.
@@ -126,84 +139,226 @@ void hideCursor();
 // This function is ahHelper function that unhids the cursor.
 void unhideCursor();
 
+
+
+
+
+
+//new
+TerminalSettingsData initializeTerminalSettings(char* error_message);
+
+
+
+void turnOff_iflags(tcflag_t* c_iflag);
+void turnOff_oflags(tcflag_t* c_oflag);
+void turnOff_cflags(tcflag_t* c_cflag);
+void turnOff_lflags(tcflag_t* c_lflag);
+void enableTimeOutForRead(struct termios* NewSettings);
+int applyNewTerminalSettings(struct termios NewSettings, char* error_message);
+
+
+CursorLocation determineConnectFourTitleLocation(TerminalSettingsData*  TerminalSettings);
+CursorLocation determineGameBoardLocation(TerminalSettingsData*  TerminalSettings);
+CursorLocation determineFirstTokenLocation(TerminalSettingsData*  TerminalSettings);
+CursorLocation determinePlayersInitialLocation(TerminalSettingsData*  TerminalSettings);
+
+
+
+
+void clearTerminal();
+//void centerCursor(TerminalSettingsData* TerminalSettings);
+void drawTitle(CursorLocation ConnectFourTitleLocation);
+void drawGameBoard(CursorLocation GameBoardLocation);
+
+
+
+void putCursorAt(int row, int col);
+
+
 /*** init ***/
 
-void enableRawInputMode(GameDataElements* GameData) {
-  // This is used for error processing incase of a failure with tcgetattr.
-  if (tcgetattr(STDIN_FILENO, &GameData->E.orig_termios) == -1) {
-    die(GameData, "tcgetattr");
-  }
 
-  struct termios raw = GameData->E.orig_termios;
-  // Documentation for termios.h flags:
-  // pubs.opengroup.org/onlinepubs/000095399/basedefs/termios.h.html
-  //
-  // BRKINT: misc flag, ICRNL: ctrl-m, INPCK: misc flag,
-  // ISTRIP: misc flag, IXON: ctrl_s and ctrl_q
-  raw.c_iflag &= ~(BRKINT | ICRNL | INPCK | ISTRIP | IXON);
-  // OPOST: output processing /r/n
-  raw.c_oflag &= ~(OPOST);
-  // CS8: misc flag
-  raw.c_cflag |= (CS8);
-  // ECHO:Print text to screen, ICANON:Canonical Mode, IEXTEN & ISIG:ctrl=c
-  // and ctrl-v
-  raw.c_lflag &= ~(ECHO | ICANON | IEXTEN | ISIG);
-  // This enables the timeout for read().
-  raw.c_cc[VMIN] = 0;
-  raw.c_cc[VTIME] = 1;
+TerminalSettingsData initializeTerminalSettings(char* error_message){
+	TerminalSettingsData OldSettings;
+	OldSettings.successful_initialization = 0;
+	
+	// Captures current terminal settings, used to enable raw mode.
+	if (tcgetattr(STDIN_FILENO, &OldSettings.orig_termios) == -1) {
+		strcat(error_message, "initializeTerminalSettings->tcgetattr");
+		OldSettings.successful_initialization = -1;
 
-  if (tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw) == -1) {
-    die(GameData, "tcsetattr");
-  }
+	}
+
+	// Determine terminal window size to center the game display.
+  	if (getWindowSize(&OldSettings.screen_rows, &OldSettings.screen_cols) == -1) {
+    		strcat(error_message, "initialize_TerminalSettings->getWindowSize");
+		OldSettings.successful_initialization = -1;
+
+  	}
+
+	return OldSettings;
 }
 
-void disableRawInputMode(GameDataElements* GameData) {
-  if (tcsetattr(STDIN_FILENO, TCSAFLUSH, &GameData->E.orig_termios) == -1) {
-    die(GameData, "tcsetattr");
-  }
+//TODO: error processing
+
+int enableRawInputMode(struct termios OriginalTerminal, char* error_message){
+	struct termios NewSettings = OriginalTerminal;
+
+	// Documentation for termios.h flags:
+  	// pubs.opengroup.org/onlinepubs/000095399/basedefs/termios.h.html
+	turnOff_iflags(&NewSettings.c_iflag);
+	turnOff_oflags(&NewSettings.c_oflag);
+	turnOff_cflags(&NewSettings.c_cflag);
+	turnOff_lflags(&NewSettings.c_lflag);
+	enableTimeOutForRead(&NewSettings);
+	return applyNewTerminalSettings(NewSettings, error_message);
+
 }
 
-void initGameData(GameDataElements* GameData) {
-  // Initializes move_counter to 0.
-  GameData->move_counter = 0;
-
-  // Populates array with 49 EMPTY tokes.
-  int i, j;
-  for (i = 0; i < 7; i++) {
-    for (j = 0; j < 7; j++) {
-      GameData->array[i][j] = EMPTY;
-    }
-  }
-
-  // Determine terminal window size to center the game display.
-  if (getWindowSize(&GameData->E.screen_rows, &GameData->E.screen_cols) == -1) {
-    die(GameData, "getWindowSize");
-  }
+void turnOff_iflags(tcflag_t* c_iflag){
+	// BRKINT: misc flag, ICRNL: ctrl-m, INPCK: misc flag,
+  	// ISTRIP: misc flag, IXON: ctrl_s and ctrl_q
+	*c_iflag &= ~(BRKINT | ICRNL | INPCK | ISTRIP | IXON);
 }
 
-void drawGameBoard(GameDataElements* GameData) {
-  hideCursor();
-  clearScreen();
-  moveCursor(0, CORNER);
+void turnOff_oflags(tcflag_t* c_oflag){
+	// OPOST: output processing /r/n
+	*c_oflag &= ~(OPOST);
+}
 
-  // Centers and moves cursor to the beginning of the game screen, and writes
-  // "CONNECT FOUR".
-  int i, j;
-  for (i = 0; i < (GameData->E.screen_rows / 2) - 13; i++) {
-    moveCursor(1, DOWN);
-  }
-  for (i = 0; i < (GameData->E.screen_cols / 2) - 6; i++) {
-    moveCursor(1, RIGHT);
-  }
-  write(STDOUT_FILENO, "CONNECT FOUR", 12);
+void turnOff_cflags(tcflag_t* c_cflag){
+	 // CS8: misc flag
+ 	 *c_cflag |= (CS8);
+}
 
-  // Moves cursor to where the board will be.
-  moveCursor(7, DOWN);
-  moveCursor(21, LEFT);
+void turnOff_lflags(tcflag_t* c_lflag){
+  	// ECHO:Print text to screen, ICANON:Canonical Mode, IEXTEN & ISIG:ctrl=c
+  	// and ctrl-v
+  	*c_lflag &= ~(ECHO | ICANON | IEXTEN | ISIG);
+}
+
+void enableTimeOutForRead(struct termios* NewSettings){
+ 	 NewSettings->c_cc[VMIN] = 0;
+	 NewSettings->c_cc[VTIME] = 1;
+}
+
+//TODO: error processing
+int applyNewTerminalSettings(struct termios NewSettings, char* error_message){
+//	tcsetattr(STDIN_FILENO, TCSAFLUSH, &NewSettings);
+
+	if (tcsetattr(STDIN_FILENO, TCSAFLUSH, &NewSettings) == -1) {
+
+		strcat(error_message, "enableRawMode->applyNewTerminalSettings->tcsetattr");
+		return -1;
+	}
+	return 0;
+
+}
+
+
+GameDataElements initilizeGameData(TerminalSettingsData* TerminalSettings) {
+  	GameDataElements NewGame;
+
+	NewGame.move_counter = 0;
+
+  	// Populates array with 49 EMPTY tokes.
+ 	int i, j;
+ 	for (i = 0; i < 7; i++) {
+    		for (j = 0; j < 7; j++) {
+      			NewGame.array[i][j] = EMPTY; 
+    		}
+  	}
+
+	NewGame.ConnectFourTitleLocation = determineConnectFourTitleLocation(TerminalSettings);	
+	NewGame.GameBoardLocation = determineGameBoardLocation(TerminalSettings);	
+	NewGame.FirstTokenLocation = determineFirstTokenLocation(TerminalSettings);
+	NewGame.PlayersInitialLocation = determinePlayersInitialLocation(TerminalSettings);		
+	
+	
+
+	return NewGame;
+}
+
+CursorLocation determineConnectFourTitleLocation(TerminalSettingsData*  TerminalSettings){
+
+	CursorLocation Title;
+	
+	Title.row = (TerminalSettings->screen_cols / 2) - 6;
+	Title.col = (TerminalSettings->screen_rows / 2) - 13;
+
+	return Title;
+}
+
+
+CursorLocation determineGameBoardLocation(TerminalSettingsData*  TerminalSettings){
+
+	CursorLocation GameBoard;
+	
+	GameBoard.row = (TerminalSettings->screen_cols / 2) - 15;
+	GameBoard.col = (TerminalSettings->screen_rows / 2) - 6;
+
+	return GameBoard;
+}
+
+CursorLocation determineFirstTokenLocation(TerminalSettingsData*  TerminalSettings){
+
+	CursorLocation FirstToken;
+
+	FirstToken.row = (TerminalSettings->screen_cols / 2) - 13;
+	FirstToken.col = (TerminalSettings->screen_rows / 2) - 4;
+
+	return FirstToken;
+}
+
+CursorLocation determinePlayersInitialLocation(TerminalSettingsData*  TerminalSettings){
+
+	CursorLocation PlayersInitial;
+
+	PlayersInitial.row = (TerminalSettings->screen_cols / 2) - 13;
+	PlayersInitial.col = (TerminalSettings->screen_rows / 2) - 6;
+
+	return PlayersInitial;
+}
+
+//TODO statusboardLocations
+
+
+
+
+
+
+
+
+
+void displayGameBoard(GameDataElements* GameData) {
+  clearTerminal();
+  drawTitle(GameData->ConnectFourTitleLocation);
+  drawGameBoard(GameData->GameBoardLocation);
+}
+
+
+
+
+void clearTerminal(){
+	hideCursor();
+  	clearScreen();
+  	moveCursor(0, CORNER);
+}
+
+
+
+void drawTitle(CursorLocation ConnectFourTitleLocation){
+
+  putCursorAt(ConnectFourTitleLocation.col, ConnectFourTitleLocation.row);  
+  display("CONNECT FOUR");	
+}
+
+
+void drawGameBoard(CursorLocation GameBoardLocation){
+  putCursorAt(GameBoardLocation.col, GameBoardLocation.row);
 
   // Draws the game board.
-  int counter_x = 0;
-  int counter_y = 0;
+  int i, j;
   for (i = 0; i < 15; i++) {
     moveCursor(1, DOWN);
 
@@ -213,23 +368,78 @@ void drawGameBoard(GameDataElements* GameData) {
       for (j = 0; j < 29; j++) {
         if (j % 4 == 0) {
           display("|");
-        } else if ((j - 2) % 4 == 0) {
-          display(tokenAtIndex(GameData, counter_y++, counter_x));
-        } else
+	}else
           display(" ");
       }
-      counter_y = 0;
-      counter_x++;
-    }
+     }
     moveCursor(29, LEFT);
   }
-
-  // Displays the status bars.
-  directionsStatusBar();
-  playerTurnStatusBar();
-  winnerStatusBar();
 }
 
+
+void displayTokens(GameDataElements* GameData){
+	int cursor_col = GameData->FirstTokenLocation.col;
+	int cursor_row = GameData->FirstTokenLocation.row;	
+	int token_col,  token_row;
+	for(token_col=0; token_col<7; token_col++){
+		for(token_row=0; token_row<7; token_row++){
+			putCursorAt(cursor_col, cursor_row);
+			display(tokenAt(GameData, token_row, token_col));
+			cursor_row += 4;		
+					}
+		cursor_row = GameData->FirstTokenLocation.row;
+		cursor_col += 2;
+	}
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*
+
+
+void disableRawInputMode(GameDataElements* GameData) {
+  if (tcsetattr(STDIN_FILENO, TCSAFLUSH, &GameData->E.orig_termios) == -1) {
+    die(GameData, "tcsetattr");
+  }
+}
+
+*/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//TODO error processing
 int getWindowSize(int* out_rows, int* out_cols) {
   struct winsize Ws;
 
@@ -242,14 +452,14 @@ int getWindowSize(int* out_rows, int* out_cols) {
   }
 }
 
-void die(GameDataElements* GameData, const char* s) {
+void die(GameDataElements* GameData, const char* error_message) {
   clearScreen();
   moveCursor(0, CORNER);
   unhideCursor();
 
-  disableRawInputMode(GameData);
+ // disableRawInputMode(GameData);
 
-  perror(s);
+  perror(error_message);
   exit(1);
 }
 
@@ -264,9 +474,8 @@ void playerInput(GameDataElements* GameData) {
     token = "O";
   }
 
-  // Places the cursor above graphic representation of array[0][0].
-  moveCursor(15, UP);
-  moveCursor(2, RIGHT);
+  putCursorAt(GameData->PlayersInitialLocation.col, GameData->PlayersInitialLocation.row);
+
   display(token);
   moveCursor(1, LEFT);
 
@@ -301,7 +510,7 @@ void playerInput(GameDataElements* GameData) {
       clearScreen();
       moveCursor(0, CORNER);
       unhideCursor();
-      disableRawInputMode(GameData);
+     // disableRawInputMode(GameData);
       exit(0);
       break;
 
@@ -345,6 +554,8 @@ void playerInput(GameDataElements* GameData) {
     // '/r' represents the enter key. This drops the token and end the players
     // turn.
     case '\r':
+      display(" "); //FIXME if column is full isn't working right
+
       if (drop(GameData, index)) {
         player_turn--;
       }
@@ -354,14 +565,14 @@ void playerInput(GameDataElements* GameData) {
   }
 }
 
-char* tokenAtIndex(GameDataElements* GameData, int y, int x) {
+char* tokenAt(GameDataElements* GameData, int col, int row) {
   // RED
-  if (GameData->array[x][y] == 0) {
+  if (GameData->array[row][col] == 0) {
     return "X";
   }
 
   // YELLOW
-  if (GameData->array[x][y] == 1) {
+  if (GameData->array[row][col] == 1) {
     return "O";
   }
 
@@ -421,6 +632,26 @@ void moveCursor(int amount, char* direction) {
   write(STDOUT_FILENO, esc, sizeof(esc));
 }
 
+void putCursorAt(int col, int row){
+  char esc[20] = ESC;
+
+  char buffer[10];
+  sprintf(buffer, "%d", col);
+  strcat(esc, buffer);
+  strcat(esc,";");
+
+  sprintf(buffer, "%d", row);
+  strcat(esc, buffer);
+
+  strcat(esc, "H");
+
+  write(STDOUT_FILENO, esc, sizeof(esc));
+}
+
+
+
+
+
 void display(char* item) { write(STDOUT_FILENO, item, strlen(item)); }
 
 void clearScreen() { write(STDOUT_FILENO, CLEAR, 4); }
@@ -429,22 +660,48 @@ void hideCursor() { write(STDOUT_FILENO, HIDE, 6); }
 
 void unhideCursor() { write(STDOUT_FILENO, UNHIDE, 6); }
 
+
+
+
+
+
+
+
+
+
+
 /*** main ***/
 
 int main() {
-  GameDataElements GameData;
+  char error_message[50] = "";
 
-  enableRawInputMode(&GameData);
-  initGameData(&GameData);
+  TerminalSettingsData TerminalSettings = initializeTerminalSettings(error_message);
+  if ( TerminalSettings.successful_initialization == -1 ){
+	perror(error_message);
+  	exit(1);
+  }
 
-  while (1) {
+  if ( enableRawInputMode(TerminalSettings.orig_termios, error_message) == -1 ){
+	perror(error_message);
+  	exit(1);
+  }
+
+  GameDataElements GameData = initilizeGameData(&TerminalSettings);
+  displayGameBoard(&GameData);
+
+
+  while ( strcmp(error_message, "NONE") == 0 ){
     // The function drawGameBoard is prior to the function connectFourPresent so
     // that upon a winning move the last token placement is displayed.
-    drawGameBoard(&GameData);
+    displayTokens(&GameData);
     connectFourPresent(&GameData);
     playerInput(&GameData);
-    GameData.move_counter++;
+    GameData.move_counter++; //FIXME  needs to be in a better place
   }
+
+   
+
+
 
   return 0;
 }
