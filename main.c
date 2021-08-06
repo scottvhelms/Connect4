@@ -199,7 +199,6 @@ TerminalSettingsData initializeTerminalSettings(char* error_message){
 	return OldSettings;
 }
 
-//TODO: error processing
 
 int enableRawInputMode(struct termios OriginalTerminal, char* error_message){
 	struct termios NewSettings = OriginalTerminal;
@@ -242,17 +241,13 @@ void enableTimeOutForRead(struct termios* NewSettings){
 	 NewSettings->c_cc[VTIME] = 1;
 }
 
-//TODO: error processing
 int applyNewTerminalSettings(struct termios NewSettings, char* error_message){
-//	tcsetattr(STDIN_FILENO, TCSAFLUSH, &NewSettings);
-
 	if (tcsetattr(STDIN_FILENO, TCSAFLUSH, &NewSettings) == -1) {
-
 		strcat(error_message, "enableRawMode->applyNewTerminalSettings->tcsetattr");
 		return -1;
 	}
-	return 0;
 
+	return 0;
 }
 
 
@@ -274,13 +269,10 @@ GameDataElements initilizeGameData(TerminalSettingsData* TerminalSettings) {
 	NewGame.FirstTokenLocation = determineFirstTokenLocation(TerminalSettings);
 	NewGame.PlayersInitialLocation = determinePlayersInitialLocation(TerminalSettings);		
 	
-	
-
 	return NewGame;
 }
 
 CursorLocation determineConnectFourTitleLocation(TerminalSettingsData*  TerminalSettings){
-
 	CursorLocation Title;
 	
 	Title.row = (TerminalSettings->screen_cols / 2) - 6;
@@ -291,7 +283,6 @@ CursorLocation determineConnectFourTitleLocation(TerminalSettingsData*  Terminal
 
 
 CursorLocation determineGameBoardLocation(TerminalSettingsData*  TerminalSettings){
-
 	CursorLocation GameBoard;
 	
 	GameBoard.row = (TerminalSettings->screen_cols / 2) - 15;
@@ -301,7 +292,6 @@ CursorLocation determineGameBoardLocation(TerminalSettingsData*  TerminalSetting
 }
 
 CursorLocation determineFirstTokenLocation(TerminalSettingsData*  TerminalSettings){
-
 	CursorLocation FirstToken;
 
 	FirstToken.row = (TerminalSettings->screen_cols / 2) - 13;
@@ -311,7 +301,6 @@ CursorLocation determineFirstTokenLocation(TerminalSettingsData*  TerminalSettin
 }
 
 CursorLocation determinePlayersInitialLocation(TerminalSettingsData*  TerminalSettings){
-
 	CursorLocation PlayersInitial;
 
 	PlayersInitial.row = (TerminalSettings->screen_cols / 2) - 13;
@@ -393,53 +382,6 @@ void displayTokens(GameDataElements* GameData){
 }
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/*
-
-
-void disableRawInputMode(GameDataElements* GameData) {
-  if (tcsetattr(STDIN_FILENO, TCSAFLUSH, &GameData->E.orig_termios) == -1) {
-    die(GameData, "tcsetattr");
-  }
-}
-
-*/
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-//TODO error processing
 int getWindowSize(int* out_rows, int* out_cols) {
   struct winsize Ws;
 
@@ -452,6 +394,40 @@ int getWindowSize(int* out_rows, int* out_cols) {
   }
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/******START HERE*******/
+/* Die needs to use terminalStats and so does disable raw mode
+/* disableRawMode needs serperate error handeling to prevent loop
+
+
+
+
+/* 
+
+
+void disableRawInputMode(GameDataElements* GameData) {
+  if (tcsetattr(STDIN_FILENO, TCSAFLUSH, &GameData->E.orig_termios) == -1) {
+    die(GameData, "tcsetattr");
+  }
+}
+
+*/
+
 void die(GameDataElements* GameData, const char* error_message) {
   clearScreen();
   moveCursor(0, CORNER);
@@ -462,6 +438,23 @@ void die(GameDataElements* GameData, const char* error_message) {
   perror(error_message);
   exit(1);
 }
+
+
+/******START HERE*******/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 /*** Gameplay Loop ***/
 
