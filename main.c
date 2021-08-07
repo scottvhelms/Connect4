@@ -25,6 +25,15 @@
 #define NO_ERRORS ""
 #define PLAYER1 "X"
 #define PLAYER2 "O"
+#define TITLE "CONNECT FOUR"
+#define BOARDTOP "+---+---+---+---+---+---+---+"
+#define DIRECTIONS_ARROWS "PRESS ARROW KEY TO MOVE THE TOKEN"
+#define DIRECTIONS_ENTER "PRESS ENTER KEY TO DROP THE TOKEN"
+#define P1TURN "PLAYER 1's TURN"
+#define P2TURN "PLAYER 2's TURN"
+#define P1WIN "PLAYER 1 IS THE WINNER"
+#define P2WIN "PLAYER 2 IS THE WINNER"
+
 
 /*** enum ***/
 
@@ -114,15 +123,15 @@ void resetGame();
 
 // This function displays a status bar that contains the directions for playing
 // the game.
-void directionsStatusBar();
+void displayDirectionsStatusBar(CursorLoc DirectionsStatusBarLoc);
 
 // This function displays the status bar that changes between player 1 and 2,
 // depending on players turn.
-void playerTurnStatusBar();
+void playerTurnStatusBar(GameDataElements* GameData);
 
 // This function displays a status bar upon a connect four being found and the
 // game being over.
-void displayWinnerStatusBar(CursorLoc WinnerStatusBarLoc);
+void displayWinnerStatusBar(GameDataElements* GameData);
 
 /** Misc **/
 
@@ -157,8 +166,10 @@ CursorLoc determineConnectFourTitleLoc(TermSettingsData* TermSettings);
 CursorLoc determineGameBoardLoc(TermSettingsData* TermSettings);
 CursorLoc determineFirstTokenLoc(TermSettingsData* TermSettings);
 CursorLoc determinePlayersInitialLoc(TermSettingsData* TermSettings);
-
+CursorLoc determineDirectionsStatusBarLoc(TermSettingsData* TermSettings);
+CursorLoc determinePlayerTurnStatusBarLoc(TermSettingsData* TermSettings);
 CursorLoc determineWinnerStatusBarLoc(TermSettingsData* TermSettings);
+int textOffsetForCentering(char* text);
 
 void clearTerm();
 void drawTitle(CursorLoc ConnectFourTitleLoc);
@@ -266,7 +277,8 @@ GameDataElements initilizeGameData(TermSettingsData* TermSettings) {
   NewGame.GameBoardLoc = determineGameBoardLoc(TermSettings);
   NewGame.FirstTokenLoc = determineFirstTokenLoc(TermSettings);
   NewGame.PlayersInitialLoc = determinePlayersInitialLoc(TermSettings);
-
+  NewGame.DirectionsStatusBarLoc = determineDirectionsStatusBarLoc(TermSettings);
+  NewGame.PlayerTurnStatusBarLoc = determinePlayerTurnStatusBarLoc(TermSettings);
   NewGame.WinnerStatusBarLoc = determineWinnerStatusBarLoc(TermSettings);
 
   return NewGame;
@@ -275,8 +287,8 @@ GameDataElements initilizeGameData(TermSettingsData* TermSettings) {
 CursorLoc determineConnectFourTitleLoc(TermSettingsData* TermSettings) {
   CursorLoc Title;
 
-  Title.row = (TermSettings->screen_cols / 2) - 6;
-  Title.col = (TermSettings->screen_rows / 2) - 13;
+  Title.row = (TermSettings->screen_cols / 2) - textOffsetForCentering(TITLE);
+  Title.col = (TermSettings->screen_rows / 2) - 14;
 
   return Title;
 }
@@ -284,7 +296,7 @@ CursorLoc determineConnectFourTitleLoc(TermSettingsData* TermSettings) {
 CursorLoc determineGameBoardLoc(TermSettingsData* TermSettings) {
   CursorLoc GameBoard;
 
-  GameBoard.row = (TermSettings->screen_cols / 2) - 15;
+  GameBoard.row = (TermSettings->screen_cols / 2) - textOffsetForCentering(BOARDTOP);
   GameBoard.col = (TermSettings->screen_rows / 2) - 6;
 
   return GameBoard;
@@ -293,7 +305,7 @@ CursorLoc determineGameBoardLoc(TermSettingsData* TermSettings) {
 CursorLoc determineFirstTokenLoc(TermSettingsData* TermSettings) {
   CursorLoc FirstToken;
 
-  FirstToken.row = (TermSettings->screen_cols / 2) - 13;
+  FirstToken.row = (TermSettings->screen_cols / 2) - (textOffsetForCentering(BOARDTOP)-2);
   FirstToken.col = (TermSettings->screen_rows / 2) - 4;
 
   return FirstToken;
@@ -302,26 +314,48 @@ CursorLoc determineFirstTokenLoc(TermSettingsData* TermSettings) {
 CursorLoc determinePlayersInitialLoc(TermSettingsData* TermSettings) {
   CursorLoc PlayersInitial;
 
-  PlayersInitial.row = (TermSettings->screen_cols / 2) - 13;
+  PlayersInitial.row = (TermSettings->screen_cols / 2) - (textOffsetForCentering(BOARDTOP)-2);
   PlayersInitial.col = (TermSettings->screen_rows / 2) - 6;
 
   return PlayersInitial;
 }
 
+CursorLoc determineDirectionsStatusBarLoc(TermSettingsData* TermSettings) {
+  CursorLoc Directions;
+
+  Directions.row = (TermSettings->screen_cols / 2) - textOffsetForCentering(DIRECTIONS_ARROWS);
+  Directions.col = (TermSettings->screen_rows / 2) + 12; 
+
+  return Directions;
+}
+
+CursorLoc determinePlayerTurnStatusBarLoc(TermSettingsData* TermSettings) {
+  CursorLoc PlayerTurn;
+
+  PlayerTurn.row = (TermSettings->screen_cols / 2) - textOffsetForCentering(P1TURN);
+  PlayerTurn.col = (TermSettings->screen_rows / 2) - 8; 
+
+  return PlayerTurn;
+}
+
 CursorLoc determineWinnerStatusBarLoc(TermSettingsData* TermSettings) {
   CursorLoc WinnerStatusBar;
 
-  WinnerStatusBar.row = (TermSettings->screen_cols / 2) - 3;
-  WinnerStatusBar.col = (TermSettings->screen_rows / 2) + 12;
+  WinnerStatusBar.row = (TermSettings->screen_cols / 2) - textOffsetForCentering(P1WIN);
+  WinnerStatusBar.col = (TermSettings->screen_rows / 2) - 8;
 
   return WinnerStatusBar;
 }
 
-// TODO statusboardLocs
+int textOffsetForCentering(char* text){ 
+	return strlen(text)/(2);
+}
+
 
 void displayGameBoard(GameDataElements* GameData) {
   clearTerm();
   drawTitle(GameData->ConnectFourTitleLoc);
+  displayDirectionsStatusBar(GameData->DirectionsStatusBarLoc);
   drawGameBoard(GameData->GameBoardLoc);
 }
 
@@ -334,7 +368,7 @@ void clearTerm() {
 void drawTitle(CursorLoc ConnectFourTitleLoc) {
 
   putCursorAt(ConnectFourTitleLoc.col, ConnectFourTitleLoc.row);
-  display("CONNECT FOUR");
+  display(TITLE);
 }
 
 void drawGameBoard(CursorLoc GameBoardLoc) {
@@ -346,7 +380,7 @@ void drawGameBoard(CursorLoc GameBoardLoc) {
     moveCursor(1, DOWN);
 
     if (i % 2 == 0) {
-      display("+---+---+---+---+---+---+---+");
+      display(BOARDTOP);
     } else {
       for (j = 0; j < 29; j++) {
         if (j % 4 == 0) {
@@ -697,14 +731,38 @@ void resetGame() {}
 
 /*** Status Bars ***/
 
-void directionsStatusBar() {} // TODO called in display board
+void displayDirectionsStatusBar(CursorLoc DirectionsStatusBarLoc) {
+	
+  putCursorAt(DirectionsStatusBarLoc.col, DirectionsStatusBarLoc.row);
+  display(DIRECTIONS_ARROWS);
+  putCursorAt(DirectionsStatusBarLoc.col+1, DirectionsStatusBarLoc.row);
+  display(DIRECTIONS_ENTER);
+} 
 
-void playerTurnStatusBar() {} //TODO called in main
 
-void displayWinnerStatusBar(CursorLoc WinnerStatusBarLoc) {
+void displayPlayerTurnStatusBar(GameDataElements* GameData) {
 
-  putCursorAt(WinnerStatusBarLoc.col, WinnerStatusBarLoc.row);
-  display("WINNER");
+  putCursorAt(GameData->PlayerTurnStatusBarLoc.col, GameData->PlayerTurnStatusBarLoc.row);
+
+  if (GameData->move_counter % 2 == 0) {
+      display(P1TURN);
+    } else {
+      display(P2TURN);
+    }
+
+
+} 
+
+void displayWinnerStatusBar(GameDataElements* GameData) {// TODO fix
+
+  putCursorAt(GameData->WinnerStatusBarLoc.col, GameData->WinnerStatusBarLoc.row);
+
+  if (GameData->move_counter % 2 == 0) {
+      display(P2WIN);
+    } else {
+      display(P1WIN);
+    }
+
 }
 
 /*** Misc ***/
@@ -772,9 +830,13 @@ int main() {
     // The function displayTokens is prior to the function connectFourPresent so
     // that upon a winning move the last token placement is displayed.
     displayTokens(&GameData);
+
     if (connectFourPresent(GameData.array)) {
-      displayWinnerStatusBar(GameData.WinnerStatusBarLoc);
+      displayWinnerStatusBar(&GameData);//TODO add endgame here
+    } else {
+      displayPlayerTurnStatusBar(&GameData);
     }
+
     game_not_quit = playerInput(&GameData, error_message);
   }
 
