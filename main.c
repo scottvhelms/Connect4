@@ -632,32 +632,39 @@ void showConnectFour(GameDataElements* GameData, int row, int col, int direction
 	enableBlinkingText();
 	int i;
 	int temp_col = col;
+	int temp_row = row;
 	switch(direction){
 
 	case HORIZONTAL:
-		//	int i;
-  		//	int temp_col = col;
-
-			// FIXME moveCURSOR here is the fix
   			for (i = 0; i < 4; i++) {
-				putCursorAt(GameData->FirstTokenLoc.row+(row*2),GameData->FirstTokenLoc.col+(temp_col*4));
-				displayTokenAt(GameData->array, temp_col--, row);
-			//	putCursorAt(GameData->FirstTokenLoc.col+(row*2), GameData->FirstTokenLoc.row+(temp_col*4));
-
-   			 //	if (array[row][col] != array[row][--temp_col]) {
-			//		return 0;
-   			 //	}
-			  }
+				putCursorAt(GameData->FirstTokenLoc.row+(temp_row*2),GameData->FirstTokenLoc.col+(temp_col*4));
+				displayTokenAt(GameData->array, temp_col--, temp_row);
+			}
 
 			break;
 
 	case LEFTDIAG:
+			  for (i = 0; i < 4; i++) {
+ 			   	putCursorAt(GameData->FirstTokenLoc.row+(temp_row*2), GameData->FirstTokenLoc.col+(temp_col*4));
+				displayTokenAt(GameData->array, temp_col--, temp_row--);
+			  }
+		
 			break;
 
 	case VERTICAL:
+			  for (i = 0; i < 4; i++) {
+ 			   	putCursorAt(GameData->FirstTokenLoc.row+(temp_row*2), GameData->FirstTokenLoc.col+(temp_col*4));
+				displayTokenAt(GameData->array, temp_col, temp_row--);
+			  }
+
 			break;
 
 	case RIGHTDIAG:
+			  for (i = 0; i < 4; i++) {
+ 			   	putCursorAt(GameData->FirstTokenLoc.row+(temp_row*2), GameData->FirstTokenLoc.col+(temp_col*4));
+				displayTokenAt(GameData->array, temp_col++, temp_row--);
+			  }
+
 			break;
 }
 	disableBlinkingText();
@@ -675,12 +682,15 @@ int connectFourPresent(GameDataElements* GameData) {
         return 1;
       }
       if (connectFourLeftDiagonal(GameData->array, row, col)) {
+	showConnectFour(GameData, row, col, LEFTDIAG);
         return 1;
       }
       if (connectFourVertical(GameData->array, row, col)) {
+	showConnectFour(GameData, row, col, VERTICAL);
         return 1;
       }
       if (connectFourRightDiagonal(GameData->array, row, col)) {
+	showConnectFour(GameData, row, col, RIGHTDIAG);
         return 1;
       }
     }
