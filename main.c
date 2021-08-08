@@ -33,6 +33,12 @@
 #define P2TURN "PLAYER 2's TURN"
 #define P1WIN "PLAYER 1 IS THE WINNER"
 #define P2WIN "PLAYER 2 IS THE WINNER"
+#define RED_COLOR "\x1b[31m"
+#define YELLOW_COLOR "\x1b[33m"
+#define BLUE_COLOR "\x1b[34m"
+#define DEFAULT_COLOR "\x1b[39m"
+#define BLINKING_ON "\x1b[1;5;7m"
+#define BLINKING_OFF "\x1b[m"
 
 
 /*** enum ***/
@@ -40,6 +46,7 @@
 enum token { EMPTY = -1, RED, YELLOW };
 enum arrow_enter { ENTER = 13, RIGHT_ARROW = 67, LEFT_ARROW = 68 };
 enum bounds { LEFT_BOUNDARY = 0, RIGHT_BOUNDARY = 6 };
+enum directions{ HORIZONTAL, LEFTDIAG, VERTICAL, RIGHTDIAG};
 
 /*** Structures ***/
 
@@ -97,7 +104,7 @@ int playerInput(GameDataElements* GameData, char* error_message);
 
 // This function verifies if atoken is present at the y and x index.
 // If token is present, it is displayed on the screen.
-char* displayTokenAt(GameDataElements* GameData, int y, int x);
+void displayTokenAt(int array[7][7], int y, int x);
 
 // This function drops token to the bottom of the array or stacks on top of
 // previously placed tokens.
@@ -105,7 +112,7 @@ int drop(GameDataElements* GameData, int cur_col_position);
 
 // This function searches for the presence of a four tokens in a line
 // hoizontally, diagonally and vertically.
-int connectFourPresent();
+int connectFourPresent(GameDataElements* GameData);
 
 /** Game wrapup **/
 
@@ -172,7 +179,7 @@ CursorLoc determineWinnerStatusBarLoc(TermSettingsData* TermSettings);
 int textOffsetForCentering(char* text);
 
 void clearTerm();
-void drawTitle(CursorLoc ConnectFourTitleLoc);
+void displayTitle(CursorLoc ConnectFourTitleLoc);
 void drawGameBoard(CursorLoc GameBoardLoc);
 
 char* determineCurPlayersToken(int move_counter);
@@ -185,10 +192,18 @@ void moveTokenLeft(char* cur_players_token, int* cur_position);
 
 int connectFourHorizontal(int array[7][7], int row, int col);
 int connectFourLeftDiagonal(int array[7][7], int row, int col);
-int connectFourRightDiagonal(int array[7][7], int row, int col);
 int connectFourVertical(int array[7][7], int row, int col);
+int connectFourRightDiagonal(int array[7][7], int row, int col);
+void showConnectFour(GameDataElements* GameData, int row, int col, int direction);
 
 void putCursorAt(int row, int col);
+
+void displayRedColorText(); 
+void displayYellowColorText();
+void displayDefaultColorText();
+void displayBlueColorText(); 
+void enableBlinkingText();
+void disableBlinkingText();
 
 /*** init ***/
 
@@ -354,7 +369,7 @@ int textOffsetForCentering(char* text){
 
 void displayGameBoard(GameDataElements* GameData) {
   clearTerm();
-  drawTitle(GameData->ConnectFourTitleLoc);
+  displayTitle(GameData->ConnectFourTitleLoc);
   displayDirectionsStatusBar(GameData->DirectionsStatusBarLoc);
   drawGameBoard(GameData->GameBoardLoc);
 }
@@ -365,7 +380,7 @@ void clearTerm() {
   moveCursor(0, CORNER);
 }
 
-void drawTitle(CursorLoc ConnectFourTitleLoc) {
+void displayTitle(CursorLoc ConnectFourTitleLoc) {
 
   putCursorAt(ConnectFourTitleLoc.col, ConnectFourTitleLoc.row);
   display(TITLE);
@@ -373,8 +388,8 @@ void drawTitle(CursorLoc ConnectFourTitleLoc) {
 
 void drawGameBoard(CursorLoc GameBoardLoc) {
   putCursorAt(GameBoardLoc.col, GameBoardLoc.row);
+  displayBlueColorText(); 
 
-  // Draws the game board.
   int i, j;
   for (i = 0; i < 15; i++) {
     moveCursor(1, DOWN);
@@ -391,7 +406,10 @@ void drawGameBoard(CursorLoc GameBoardLoc) {
     }
     moveCursor(29, LEFT);
   }
+
+  displayDefaultColorText();
 }
+
 
 void displayTokens(GameDataElements* GameData) {
   int cursor_col = GameData->FirstTokenLoc.col;
@@ -400,7 +418,7 @@ void displayTokens(GameDataElements* GameData) {
   for (token_col = 0; token_col < 7; token_col++) {
     for (token_row = 0; token_row < 7; token_row++) {
       putCursorAt(cursor_col, cursor_row);
-      display(displayTokenAt(GameData, token_row, token_col));
+      displayTokenAt(GameData->array, token_row, token_col);
       cursor_row += 4;
     }
     cursor_row = GameData->FirstTokenLoc.row;
@@ -408,19 +426,20 @@ void displayTokens(GameDataElements* GameData) {
   }
 }
 
-char* displayTokenAt(GameDataElements* GameData, int col, int row) {
-  // RED
-  if (GameData->array[row][col] == 0) {
-    return PLAYER1;
-  }
+void displayTokenAt(int array[7][7], int col, int row) {
+  if (array[row][col] == 0) {
+    displayRedColorText();
+    write(STDOUT_FILENO, PLAYER1, strlen(PLAYER1));
+    displayDefaultColorText();
+ } else if (array[row][col] == 1) {
+    displayYellowColorText();
+    write(STDOUT_FILENO, PLAYER2, strlen(PLAYER2));
+    displayDefaultColorText();
 
-  // YELLOW
-  if (GameData->array[row][col] == 1) {
-    return PLAYER2;
-  }
+  } else {
 
-  // EMPTY
-  return " ";
+  write(STDOUT_FILENO, " ", 1);
+ }
 }
 
 int getWindowSize(int* out_rows, int* out_cols) {
@@ -518,8 +537,15 @@ char* determineCurPlayersToken(int move_counter) {
 }
 
 void displayCurPlayersToken(char* cur_players_token) {
+  if(strcmp (cur_players_token, PLAYER1) == 0 ){
+	displayRedColorText();
+  } else {
+	displayYellowColorText();
+  }
   display(cur_players_token);
   moveCursor(1, LEFT);
+
+  displayDefaultColorText();
 }
 
 int playerInputReader(char* player_input, char* error_message) {
@@ -598,20 +624,61 @@ int drop(GameDataElements* GameData, int cur_col_position) {
   return 1;
 }
 
-int connectFourPresent(int array[7][7]) {
+
+
+void showConnectFour(GameDataElements* GameData, int row, int col, int direction){
+	enableBlinkingText();
+	int i;
+	int temp_col = col;
+	switch(direction){
+
+	case HORIZONTAL:
+		//	int i;
+  		//	int temp_col = col;
+
+			// FIXME moveCURSOR here is the fix
+  			for (i = 0; i < 4; i++) {
+				putCursorAt(GameData->FirstTokenLoc.col+(row*2), GameData->FirstTokenLoc.row+(temp_col*4));
+				displayTokenAt(GameData->array, temp_col--, row);
+				putCursorAt(GameData->FirstTokenLoc.col+(row*2), GameData->FirstTokenLoc.row+(temp_col*4));
+
+   			 //	if (array[row][col] != array[row][--temp_col]) {
+			//		return 0;
+   			 //	}
+			  }
+
+			break;
+
+	case LEFTDIAG:
+			break;
+
+	case VERTICAL:
+			break;
+
+	case RIGHTDIAG:
+			break;
+}
+	disableBlinkingText();
+}
+
+
+
+
+int connectFourPresent(GameDataElements* GameData) {
   int row, col;
   for (row = 6; row >= 0; row--) {
     for (col = 6; col >= 0; col--) {
-      if (connectFourHorizontal(array, row, col)) {
+      if (connectFourHorizontal(GameData->array, row, col)) {
+	showConnectFour(GameData, row, col, HORIZONTAL);
         return 1;
       }
-      if (connectFourLeftDiagonal(array, row, col)) {
+      if (connectFourLeftDiagonal(GameData->array, row, col)) {
         return 1;
       }
-      if (connectFourRightDiagonal(array, row, col)) {
+      if (connectFourVertical(GameData->array, row, col)) {
         return 1;
       }
-      if (connectFourVertical(array, row, col)) {
+      if (connectFourRightDiagonal(GameData->array, row, col)) {
         return 1;
       }
     }
@@ -623,77 +690,40 @@ int connectFourHorizontal(int array[7][7], int row, int col) {
   if (col < 3) {
     return 0;
   }
+
   if (array[row][col] == EMPTY) {
     return 0;
   }
 
   int i;
-  int same_token_encountered = 1;
   int temp_col = col;
   for (i = 0; i < 3; i++) {
-    if (array[row][col] == array[row][--temp_col]) {
-      same_token_encountered++;
-    } else {
-      same_token_encountered = 1;
+    if (array[row][col] != array[row][--temp_col]) {
+	return 0;
     }
   }
-  if (same_token_encountered == 4) {
-    return 1;
-  } else {
-    return 0;
-  }
+
+ return 1;
 }
 
 int connectFourLeftDiagonal(int array[7][7], int row, int col) {
   if (col < 3 || row < 3) {
     return 0;
   }
+
   if (array[row][col] == EMPTY) {
     return 0;
   }
 
   int i;
-  int same_token_encountered = 1;
   int temp_col = col;
   int temp_row = row;
   for (i = 0; i < 3; i++) {
-    if (array[row][col] == array[--temp_row][--temp_col]) {
-      same_token_encountered++;
-    } else {
-      same_token_encountered = 1;
+    if (array[row][col] != array[--temp_row][--temp_col]) {
+	return 0;
     }
   }
-  if (same_token_encountered == 4) {
-    return 1;
-  } else {
-    return 0;
-  }
-}
-
-int connectFourRightDiagonal(int array[7][7], int row, int col) {
-  if (col > 3 || row < 3) {
-    return 0;
-  }
-  if (array[row][col] == EMPTY) {
-    return 0;
-  }
-
-  int i;
-  int same_token_encountered = 1;
-  int temp_col = col;
-  int temp_row = row;
-  for (i = 0; i < 3; i++) {
-    if (array[row][col] == array[--temp_row][++temp_col]) {
-      same_token_encountered++;
-    } else {
-      same_token_encountered = 1;
-    }
-  }
-  if (same_token_encountered == 4) {
-    return 1;
-  } else {
-    return 0;
-  }
+	return 1;
 }
 
 int connectFourVertical(int array[7][7], int row, int col) {
@@ -705,21 +735,36 @@ int connectFourVertical(int array[7][7], int row, int col) {
   }
 
   int i;
-  int same_token_encountered = 1;
   int temp_row = row;
   for (i = 0; i < 3; i++) {
-    if (array[row][col] == array[--temp_row][col]) {
-      same_token_encountered++;
-    } else {
-      same_token_encountered = 1;
+    if (array[row][col] != array[--temp_row][col]) {
+
+
+	return 0;
     }
   }
-  if (same_token_encountered == 4) {
-    return 1;
-  } else {
+	return 1;
+}
+
+int connectFourRightDiagonal(int array[7][7], int row, int col) {
+  if (col > 3 || row < 3) {
     return 0;
   }
+  if (array[row][col] == EMPTY) {
+    return 0;
+  }
+
+  int i;
+  int temp_col = col;
+  int temp_row = row;
+  for (i = 0; i < 3; i++) {
+    if (array[row][col] != array[--temp_row][++temp_col]) {
+	return 0;
+    }
+  }
+	return 1;
 }
+
 
 /*** Game wrapup ***/
 
@@ -734,9 +779,11 @@ void resetGame() {}
 void displayDirectionsStatusBar(CursorLoc DirectionsStatusBarLoc) {
 	
   putCursorAt(DirectionsStatusBarLoc.col, DirectionsStatusBarLoc.row);
+  displayBlueColorText();
   display(DIRECTIONS_ARROWS);
   putCursorAt(DirectionsStatusBarLoc.col+1, DirectionsStatusBarLoc.row);
   display(DIRECTIONS_ENTER);
+  displayDefaultColorText();
 } 
 
 
@@ -745,24 +792,31 @@ void displayPlayerTurnStatusBar(GameDataElements* GameData) {
   putCursorAt(GameData->PlayerTurnStatusBarLoc.col, GameData->PlayerTurnStatusBarLoc.row);
 
   if (GameData->move_counter % 2 == 0) {
+      displayRedColorText();
       display(P1TURN);
+      displayDefaultColorText();
     } else {
+      displayYellowColorText();
       display(P2TURN);
+      displayDefaultColorText();
     }
 
 
 } 
 
-void displayWinnerStatusBar(GameDataElements* GameData) {// TODO fix
+void displayWinnerStatusBar(GameDataElements* GameData) {
 
   putCursorAt(GameData->WinnerStatusBarLoc.col, GameData->WinnerStatusBarLoc.row);
-
+  enableBlinkingText();
   if (GameData->move_counter % 2 == 0) {
+      displayYellowColorText();
       display(P2WIN);
     } else {
+      displayRedColorText();
       display(P1WIN);
     }
-
+   displayDefaultColorText();
+   disableBlinkingText();
 }
 
 /*** Misc ***/
@@ -804,6 +858,20 @@ void hideCursor() { write(STDOUT_FILENO, HIDE, 6); }
 
 void unhideCursor() { write(STDOUT_FILENO, UNHIDE, 6); }
 
+void displayRedColorText() { write(STDOUT_FILENO, RED_COLOR, 5); }
+
+void displayYellowColorText() { write(STDOUT_FILENO, YELLOW_COLOR, 5); }
+
+void displayBlueColorText() {  write(STDOUT_FILENO, BLUE_COLOR, 5); }
+
+void displayDefaultColorText() { write(STDOUT_FILENO, DEFAULT_COLOR, 5); }
+
+void enableBlinkingText() { write(STDOUT_FILENO, BLINKING_ON, strlen(BLINKING_ON)); }
+
+void disableBlinkingText() { write(STDOUT_FILENO, BLINKING_OFF, strlen(BLINKING_OFF)); }
+
+
+
 /*** main ***/
 
 int main() {
@@ -831,7 +899,7 @@ int main() {
     // that upon a winning move the last token placement is displayed.
     displayTokens(&GameData);
 
-    if (connectFourPresent(GameData.array)) {
+    if (connectFourPresent(&GameData)) {
       displayWinnerStatusBar(&GameData);//TODO add endgame here
     } else {
       displayPlayerTurnStatusBar(&GameData);
