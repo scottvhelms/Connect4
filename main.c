@@ -302,8 +302,8 @@ GameDataElements initilizeGameData(TermSettingsData* TermSettings) {
 CursorLoc determineConnectFourTitleLoc(TermSettingsData* TermSettings) {
   CursorLoc Title;
 
-  Title.row = (TermSettings->screen_cols / 2) - textOffsetForCentering(TITLE);
-  Title.col = (TermSettings->screen_rows / 2) - 14;
+  Title.col = (TermSettings->screen_cols / 2) - textOffsetForCentering(TITLE);
+  Title.row = (TermSettings->screen_rows / 2) - 14;
 
   return Title;
 }
@@ -311,8 +311,8 @@ CursorLoc determineConnectFourTitleLoc(TermSettingsData* TermSettings) {
 CursorLoc determineGameBoardLoc(TermSettingsData* TermSettings) {
   CursorLoc GameBoard;
 
-  GameBoard.row = (TermSettings->screen_cols / 2) - textOffsetForCentering(BOARDTOP);
-  GameBoard.col = (TermSettings->screen_rows / 2) - 6;
+  GameBoard.col = (TermSettings->screen_cols / 2) - textOffsetForCentering(BOARDTOP);
+  GameBoard.row = (TermSettings->screen_rows / 2) - 6;
 
   return GameBoard;
 }
@@ -320,8 +320,8 @@ CursorLoc determineGameBoardLoc(TermSettingsData* TermSettings) {
 CursorLoc determineFirstTokenLoc(TermSettingsData* TermSettings) {
   CursorLoc FirstToken;
 
-  FirstToken.row = (TermSettings->screen_cols / 2) - (textOffsetForCentering(BOARDTOP)-2);
-  FirstToken.col = (TermSettings->screen_rows / 2) - 4;
+  FirstToken.col = (TermSettings->screen_cols / 2) - (textOffsetForCentering(BOARDTOP)-2);
+  FirstToken.row = (TermSettings->screen_rows / 2) - 4;
 
   return FirstToken;
 }
@@ -329,8 +329,8 @@ CursorLoc determineFirstTokenLoc(TermSettingsData* TermSettings) {
 CursorLoc determinePlayersInitialLoc(TermSettingsData* TermSettings) {
   CursorLoc PlayersInitial;
 
-  PlayersInitial.row = (TermSettings->screen_cols / 2) - (textOffsetForCentering(BOARDTOP)-2);
-  PlayersInitial.col = (TermSettings->screen_rows / 2) - 6;
+  PlayersInitial.col = (TermSettings->screen_cols / 2) - (textOffsetForCentering(BOARDTOP)-2);
+  PlayersInitial.row = (TermSettings->screen_rows / 2) - 6;
 
   return PlayersInitial;
 }
@@ -338,8 +338,8 @@ CursorLoc determinePlayersInitialLoc(TermSettingsData* TermSettings) {
 CursorLoc determineDirectionsStatusBarLoc(TermSettingsData* TermSettings) {
   CursorLoc Directions;
 
-  Directions.row = (TermSettings->screen_cols / 2) - textOffsetForCentering(DIRECTIONS_ARROWS);
-  Directions.col = (TermSettings->screen_rows / 2) + 12; 
+  Directions.col = (TermSettings->screen_cols / 2) - textOffsetForCentering(DIRECTIONS_ARROWS);
+  Directions.row = (TermSettings->screen_rows / 2) + 12; 
 
   return Directions;
 }
@@ -347,8 +347,8 @@ CursorLoc determineDirectionsStatusBarLoc(TermSettingsData* TermSettings) {
 CursorLoc determinePlayerTurnStatusBarLoc(TermSettingsData* TermSettings) {
   CursorLoc PlayerTurn;
 
-  PlayerTurn.row = (TermSettings->screen_cols / 2) - textOffsetForCentering(P1TURN);
-  PlayerTurn.col = (TermSettings->screen_rows / 2) - 8; 
+  PlayerTurn.col = (TermSettings->screen_cols / 2) - textOffsetForCentering(P1TURN);
+  PlayerTurn.row = (TermSettings->screen_rows / 2) - 8; 
 
   return PlayerTurn;
 }
@@ -356,8 +356,8 @@ CursorLoc determinePlayerTurnStatusBarLoc(TermSettingsData* TermSettings) {
 CursorLoc determineWinnerStatusBarLoc(TermSettingsData* TermSettings) {
   CursorLoc WinnerStatusBar;
 
-  WinnerStatusBar.row = (TermSettings->screen_cols / 2) - textOffsetForCentering(P1WIN);
-  WinnerStatusBar.col = (TermSettings->screen_rows / 2) - 8;
+  WinnerStatusBar.col = (TermSettings->screen_cols / 2) - textOffsetForCentering(P1WIN);
+  WinnerStatusBar.row = (TermSettings->screen_rows / 2) - 8;
 
   return WinnerStatusBar;
 }
@@ -382,12 +382,12 @@ void clearTerm() {
 
 void displayTitle(CursorLoc ConnectFourTitleLoc) {
 
-  putCursorAt(ConnectFourTitleLoc.col, ConnectFourTitleLoc.row);
+  putCursorAt(ConnectFourTitleLoc.row, ConnectFourTitleLoc.col);
   display(TITLE);
 }
 
 void drawGameBoard(CursorLoc GameBoardLoc) {
-  putCursorAt(GameBoardLoc.col, GameBoardLoc.row);
+  putCursorAt(GameBoardLoc.row, GameBoardLoc.col);
   displayBlueColorText(); 
 
   int i, j;
@@ -417,12 +417,12 @@ void displayTokens(GameDataElements* GameData) {
   int token_col, token_row;
   for (token_col = 0; token_col < 7; token_col++) {
     for (token_row = 0; token_row < 7; token_row++) {
-      putCursorAt(cursor_col, cursor_row);
-      displayTokenAt(GameData->array, token_row, token_col);
-      cursor_row += 4;
+      putCursorAt(cursor_row, cursor_col);
+      displayTokenAt(GameData->array, token_col, token_row);
+      cursor_row += 2;
     }
     cursor_row = GameData->FirstTokenLoc.row;
-    cursor_col += 2;
+    cursor_col += 4;
   }
 }
 
@@ -431,7 +431,9 @@ void displayTokenAt(int array[7][7], int col, int row) {
     displayRedColorText();
     write(STDOUT_FILENO, PLAYER1, strlen(PLAYER1));
     displayDefaultColorText();
- } else if (array[row][col] == 1) {
+ }
+
+ else if (array[row][col] == 1) {
     displayYellowColorText();
     write(STDOUT_FILENO, PLAYER2, strlen(PLAYER2));
     displayDefaultColorText();
@@ -484,7 +486,7 @@ int disableRawInputMode(TermSettingsData* TermSettings, char* error_message) {
 
 int playerInput(GameDataElements* GameData, char* error_message) {
   char* cur_players_token = determineCurPlayersToken(GameData->move_counter);
-  putCursorAt(GameData->PlayersInitialLoc.col, GameData->PlayersInitialLoc.row);
+  putCursorAt(GameData->PlayersInitialLoc.row, GameData->PlayersInitialLoc.col);
   displayCurPlayersToken(cur_players_token);
 
   char player_input;
@@ -638,9 +640,9 @@ void showConnectFour(GameDataElements* GameData, int row, int col, int direction
 
 			// FIXME moveCURSOR here is the fix
   			for (i = 0; i < 4; i++) {
-				putCursorAt(GameData->FirstTokenLoc.col+(row*2), GameData->FirstTokenLoc.row+(temp_col*4));
+				putCursorAt(GameData->FirstTokenLoc.row+(row*2),GameData->FirstTokenLoc.col+(temp_col*4));
 				displayTokenAt(GameData->array, temp_col--, row);
-				putCursorAt(GameData->FirstTokenLoc.col+(row*2), GameData->FirstTokenLoc.row+(temp_col*4));
+			//	putCursorAt(GameData->FirstTokenLoc.col+(row*2), GameData->FirstTokenLoc.row+(temp_col*4));
 
    			 //	if (array[row][col] != array[row][--temp_col]) {
 			//		return 0;
@@ -778,10 +780,10 @@ void resetGame() {}
 
 void displayDirectionsStatusBar(CursorLoc DirectionsStatusBarLoc) {
 	
-  putCursorAt(DirectionsStatusBarLoc.col, DirectionsStatusBarLoc.row);
+  putCursorAt(DirectionsStatusBarLoc.row, DirectionsStatusBarLoc.col);
   displayBlueColorText();
   display(DIRECTIONS_ARROWS);
-  putCursorAt(DirectionsStatusBarLoc.col+1, DirectionsStatusBarLoc.row);
+  putCursorAt(DirectionsStatusBarLoc.row+1, DirectionsStatusBarLoc.col);
   display(DIRECTIONS_ENTER);
   displayDefaultColorText();
 } 
@@ -789,7 +791,7 @@ void displayDirectionsStatusBar(CursorLoc DirectionsStatusBarLoc) {
 
 void displayPlayerTurnStatusBar(GameDataElements* GameData) {
 
-  putCursorAt(GameData->PlayerTurnStatusBarLoc.col, GameData->PlayerTurnStatusBarLoc.row);
+  putCursorAt(GameData->PlayerTurnStatusBarLoc.row, GameData->PlayerTurnStatusBarLoc.col);
 
   if (GameData->move_counter % 2 == 0) {
       displayRedColorText();
@@ -806,7 +808,7 @@ void displayPlayerTurnStatusBar(GameDataElements* GameData) {
 
 void displayWinnerStatusBar(GameDataElements* GameData) {
 
-  putCursorAt(GameData->WinnerStatusBarLoc.col, GameData->WinnerStatusBarLoc.row);
+  putCursorAt(GameData->WinnerStatusBarLoc.row, GameData->WinnerStatusBarLoc.col);
   enableBlinkingText();
   if (GameData->move_counter % 2 == 0) {
       displayYellowColorText();
@@ -834,15 +836,15 @@ void moveCursor(int amount, char* direction) {
   write(STDOUT_FILENO, esc, sizeof(esc));
 }
 
-void putCursorAt(int col, int row) {
+void putCursorAt(int row, int col) {
   char esc[20] = ESC;
 
   char buffer[10];
-  sprintf(buffer, "%d", col);
+  sprintf(buffer, "%d", row);
   strcat(esc, buffer);
   strcat(esc, ";");
 
-  sprintf(buffer, "%d", row);
+  sprintf(buffer, "%d", col);
   strcat(esc, buffer);
 
   strcat(esc, "H");
