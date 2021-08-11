@@ -847,6 +847,9 @@ boolean gamePlayLoop(GameData* game_data, char* error_message) {
       break;
 
     case RIGHT_ARROW:
+      // Wrap token to the other side logic. If the token is at the right
+      // boundary and the player hits the right key, the token is placed at the
+      // left boundary.
       if (current_position == RIGHT_BOUNDARY) {
         placeTokenAtLeftBoundary(current_players_token, &current_position);
       } else {
@@ -855,6 +858,9 @@ boolean gamePlayLoop(GameData* game_data, char* error_message) {
       break;
 
     case LEFT_ARROW:
+      // Wrap token to the other side logic. If the token is at the left
+      // boundary and the player hits the left key, the token is placed at the
+      // right boundary.
       if (current_position == LEFT_BOUNDARY) {
         placeTokenAtRightBoundary(current_players_token, &current_position);
       } else {
