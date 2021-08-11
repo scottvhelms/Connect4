@@ -1,2 +1,2 @@
-c4: c4.c
-	$(CC) c4.c -o c4 -Wall -Wextra -pedantic -std=c99
+c4: main
+	$(CC) main.c -o main -Wall -Wextra -pedantic -std=c99
